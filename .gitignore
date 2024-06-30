@@ -1,0 +1,44 @@
+# Python
+*.pyc
+__pycache__/
+
+# Environment
+.env
+venv/
+ENV/
+env/
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# Flask specific
+instance/
+*.db
+
+# Logs
+*.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Byte-compiled / optimized / DLL files
+*.pyd
+*.pyo
+*.pyd
+*.dll
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# macOS
+.DS_Store

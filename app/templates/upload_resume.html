@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Resume</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Your Resume</h1>
+        <form action="{{ url_for('resume_parser.upload_file') }}" method="post" enctype="multipart/form-data">
+            <div>
+                <label for="resume">Select a PDF file to upload:</label>
+                <input type="file" id="resume" name="resume" accept="application/pdf" required>
+            </div>
+            <div>
+                <button type="submit">Upload</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

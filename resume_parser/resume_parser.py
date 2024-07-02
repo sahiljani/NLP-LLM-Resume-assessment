@@ -49,14 +49,14 @@ def parse_resume(resume_text):
        
     }
 
-    timestamp = time.strftime("%Y%m%d%H%M%S")
+    # timestamp = time.strftime("%Y%m%d%H%M%S")
     # file_name = f'parsed_resume_{timestamp}.txt'
 
-    # Save to a text file
-    with open(file_name, 'w', encoding='utf-8') as file:
-        for key, value in data.items():
-            file.write(f'{key}:\n{value}\n\n')
+    # # Save to a text file
+    # with open(file_name, 'w', encoding='utf-8') as file:
+    #     for key, value in data.items():
+    #         file.write(f'{key}:\n{value}\n\n')
     
-    print(f"Resume parsed and saved to '{file_name}.txt'")
+    # print(f"Resume parsed and saved to '{file_name}.txt'")
 
     return data

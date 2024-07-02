@@ -4,7 +4,6 @@ import os
 import subprocess
 from PyPDF2 import PdfReader
 
-from job_parser.job_parser import jd_parser  # Correct import
 from resume_parser.resume_parser import parse_resume
 
 resume_parser_bp = Blueprint('resume_parser', __name__)
@@ -24,6 +23,18 @@ def extract_text_from_pdf(pdf_path):
             text += page.extract_text()
     return text
 
+def create_latex_file(latex_code, filename="document.tex"):
+    with open(filename, "w") as f:
+        f.write(latex_code)
+
+def compile_latex_to_pdf(latex_filename):
+    try:
+        subprocess.run(["pdflatex", latex_filename], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during LaTeX compilation: {e}")
+    pdf_filename = latex_filename.replace(".tex", ".pdf")
+    return pdf_filename
+
 @resume_parser_bp.route('/', methods=['GET'])
 def upload_form():
     return render_template('upload_resume.html')
@@ -37,7 +48,7 @@ def upload_file():
         return redirect(url_for('resume_parser.upload_form'))
 
     file = request.files['resume']
-    job = request.form['job']
+
     if file.filename == '':
         flash('No selected file')
         return redirect(url_for('resume_parser.upload_form'))
@@ -50,49 +61,13 @@ def upload_file():
         try:
             text = extract_text_from_pdf(file_path)
             parsed_data = parse_resume(text)
-            return render_template('result.html', data=parsed_data, job=job)
+            return render_template('result.html', data=parsed_data)
         except Exception as e:
             flash(f'An error occurred while processing the file: {e}')
             return redirect(url_for('resume_parser.upload_form'))
     else:
         flash('Invalid file type. Only PDF files are allowed.')
         return redirect(url_for('resume_parser.upload_form'))
-
-
-@resume_parser_bp.route('/api/JD', methods=['POST'])
-def upload_jd_form():
-    JD = request.json.get('JD')
-    data = jd_parser(JD)
-    return jsonify(data)
-    
-    
-@resume_parser_bp.route('/api/recheck', methods=['POST'])
-def recheck():
-    data = request.json.get('data', {})
-    job_skills = request.json.get('jobSkills', [])
-    suggestions = []
-
-    # Check the length of responsibilities in work experience
-    if 'Work Experience' in data:
-        for experience in data['Work Experience']:
-            if 'responsibilities' in experience:
-                for idx, responsibility in enumerate(experience['responsibilities']):
-                    if len(responsibility) < 50:
-                        suggestions.append({
-                            'type': 'responsibility_length',
-                            'message': f'Responsibility {idx + 1} in job "{experience["jobTitle"]}" is too short.'
-                        })
-
-    # Example check for matching job skills (extend as needed)
-    for skill in job_skills:
-        if skill not in data.get('Skills', ''):
-            suggestions.append({
-                'type': 'missing_skill',
-                'message': f'Skill "{skill}" is required for the job but is not listed in the skills section.'
-            })
-
-    return jsonify(suggestions=suggestions)
-
 
 
 if __name__ == '__main__':

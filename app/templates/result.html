@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON in HTML</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        .srollable-skills {
+        .scrollable-skills {
             overflow: auto;
             overflow-x: scroll;
             height: 400px;
@@ -23,16 +24,21 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #job-skills{
-            display: none;
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
+        #job-skills {
+            display: none;
+        }
     </style>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             displayJson();
             fetchJobData();
         });
@@ -80,12 +86,14 @@
             spinner.style.display = 'block';
 
             fetch('/api/JD', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ JD: job })
-            })
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        JD: job
+                    })
+                })
                 .then(response => response.json())
                 .then(data => {
                     spinner.style.display = 'none';
@@ -100,7 +108,7 @@
 
         function populateSections(sectionId, sectionData) {
             const section = document.getElementById(sectionId.toLowerCase().replace(" ", "-"));
-            section.innerHTML = '';  // Clear previous content
+            section.innerHTML = ''; // Clear previous content
             sectionData.forEach((item, index) => {
                 addSection(sectionId, item, index);
             });
@@ -114,20 +122,39 @@
             let fieldsHtml = `<h3 class="text-xl font-semibold mb-2">${sectionId} ${sectionId === 'Personal Info' ? '' : newIndex + 1}</h3>`;
 
             for (const key in item) {
-                const value = item[key];
-                const inputType = typeof value === 'string' && key.toLowerCase().includes('description') ? 'textarea' : 'text';
-                fieldsHtml += `
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}">
-                            ${key}
-                        </label>
-                        ${inputType === 'textarea' ? 
-                            `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
-                            `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />`
-                        }
-                    </div>
-                `;
-            }
+    console.log(key);
+    const value = item[key];
+    let inputType = 'text';
+    
+    if (key.toLowerCase().includes('description')) {
+        inputType = 'textarea';
+    }
+
+    if (key === 'responsibilities' && Array.isArray(value)) {
+        value.forEach((responsibility, index) => {
+            fieldsHtml += `
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}-${index}">
+                        Responsibility ${index + 1}
+                    </label>
+                    <input type="text" id="${key}-${newIndex}-${index}" name="${sectionId}[${newIndex}][${key}][${index}]" value="${responsibility}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+                </div>
+            `;
+        });
+    } else {
+        fieldsHtml += `
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}">
+                    ${key}
+                </label>
+                ${inputType === 'textarea' ? 
+                    `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
+                    `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />`
+                }
+            </div>
+        `;
+    }
+}
 
             if (sectionId !== 'Personal Info') {
                 fieldsHtml += `<button type="button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="removeSection(this)">Remove</button>`;
@@ -148,7 +175,7 @@
 
         function populateSkills(skills) {
             const section = document.getElementById('skills');
-            section.innerHTML = '';  // Clear previous content
+            section.innerHTML = ''; // Clear previous content
 
             skills = skills.split("\n");
             addSkillsSection("Skills", skills);
@@ -208,48 +235,93 @@
                 jobSkillsSection.appendChild(div);
             });
         }
+        function displaySuggestions(suggestions) {
+            const suggestionsList = document.getElementById('suggestions');
+            suggestions.forEach(suggestion => {
+                const li = document.createElement('li');
+                li.textContent = suggestion.message;
+                suggestionsList.appendChild(li);
+            });
+        }
+
+        function recheckDetails() {
+            const data = {{ data | tojson }};
+            const jobSkills = Array.from(document.querySelectorAll('#job-skills input')).map(input => input.value);
+
+            fetch('/api/recheck', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    data: data,
+                    jobSkills: jobSkills
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Recheck result:', data);
+                displaySuggestions(data.suggestions);
+
+                    // Handle the response data, e.g., display suggestions or errors
+                })
+                .catch(error => {
+                    console.error('Error rechecking details:', error);
+                });
+        }
     </script>
 </head>
-<body class="bg-gray-100 p-6">
-   
 
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-4">Job Skills Required</h2>
-        <div id="loading-spinner" class="loading-spinner"></div>
-        <div class="srollable-skills" id="job-skills"></div>
+<body class="bg-gray-100 p-6 flex flex-wrap">
+    <div class="w-full lg:w-3/4">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Job Skills Required</h2>
+            <div id="loading-spinner" class="loading-spinner"></div>
+            <div class="scrollable-skills" id="job-skills"></div>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Personal Info</h2>
+            <div id="personal-info"></div>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Work Experience</h2>
+            <div id="work-experience"></div>
+            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden " onclick="addNewSection('Work Experience')">Add Work Experience</button>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Projects</h2>
+            <div id="projects"></div>
+            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden " onclick="addNewSection('Projects')">Add Project</button>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Education</h2>
+            <div id="education"></div>
+            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden " onclick="addNewSection('Education')">Add Education</button>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-4">Skills</h2>
+            <div class="scrollable-skills" id="skills"></div>
+        </div>
+
+        <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML</h1>
+        <pre id="jsonData" class="overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
     </div>
 
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-4">Personal Info</h2>
-        <div id="personal-info"></div>
+    <div class="w-full lg:w-1/4 lg:pl-6">
+        <div class="fixed top-4 bg-white p-4 border rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Suggestions</h2>
+            <ul id="suggestions" class="list-disc pl-5 space-y-2">
+              
+            </ul>
+            <button type="button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mt-4" onclick="recheckDetails()">Recheck</button>
+
+        </div>
     </div>
-
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-4">Work Experience</h2>
-        <div id="work-experience"></div>
-        <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Work Experience')">Add Work Experience</button>
-    </div>
-
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-4">Projects</h2>
-        <div id="projects"></div>
-        <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Projects')">Add Project</button>
-    </div>
-
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-4">Education</h2>
-        <div id="education"></div>
-        <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Education')">Add Education</button>
-    </div>
-
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold mb-4">Skills</h2>
-        <div class="srollable-skills" id="skills"></div>
-    </div>
-
-  
-
-    <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML</h1>
-    <pre id="jsonData" class="overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
 </body>
+
 </html>

@@ -21,5 +21,4 @@ ruler.add_patterns(skill_patterns)
 def extract_skills(skills_section):
     doc = nlp(skills_section)
     skills = [ent.text for ent in doc.ents if ent.label_.startswith("SKILL")]
-    print(skills)
     return '\n'.join(skills)

@@ -26,9 +26,6 @@ def load_skill_patterns(file_path):
 # Function to parse job description
 def jd_parser(JD):
 
-    print(JD)
-    print(type(JD))
-
     skill_patterns = load_skill_patterns(os.path.join("data", "skill_patterns.jsonl"))
 
     # Check if 'entity_ruler' already exists in the pipeline

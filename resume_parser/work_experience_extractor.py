@@ -2,7 +2,6 @@ import re
 from resume_parser.gemini import generate_structured_json
 
 def extract_work_experience(work_text):
-    print(work_text)
     prompt = f"""
     Extract work experience from the following text:
     Given the following work experience text, convert each job entry into a structured JSON format with keys for job title, date range, company, location, and bullet points describing responsibilities and achievements: 

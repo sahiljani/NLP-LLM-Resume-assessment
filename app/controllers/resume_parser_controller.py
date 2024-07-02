@@ -53,7 +53,7 @@ def upload_file():
             return render_template('result.html', data=parsed_data, job=job)
         except Exception as e:
             flash(f'An error occurred while processing the file: {e}')
-            return redirect(url_for('resume_parser.upload_form'))
+            # return redirect(url_for('resume_parser.upload_form'))
     else:
         flash('Invalid file type. Only PDF files are allowed.')
         return redirect(url_for('resume_parser.upload_form'))

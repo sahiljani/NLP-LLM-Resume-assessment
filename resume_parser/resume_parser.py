@@ -50,7 +50,7 @@ def parse_resume(resume_text):
     }
 
     timestamp = time.strftime("%Y%m%d%H%M%S")
-    file_name = f'parsed_resume_{timestamp}.txt'
+    # file_name = f'parsed_resume_{timestamp}.txt'
 
     # Save to a text file
     with open(file_name, 'w', encoding='utf-8') as file:

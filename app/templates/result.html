@@ -5,21 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JSON in HTML</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .srollable-skills {
+            overflow: auto;
+            overflow-x: scroll;
+            height: 400px;
+        }
+
+        .loading-spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #job-skills{
+            display: none;
+        }
+
+    </style>
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            displayJson();
+            fetchJobData();
+        });
+
         function displayJson() {
             const data = {{ data | tojson }};
             document.getElementById('jsonData').textContent = JSON.stringify(data, null, 4);
 
             // Populate input fields based on JSON data
-            populateSections('Personal Info', [data['Personal Info']]);
-            populateSections('Work Experience', data['Work Experience']);
-            populateSections('Projects', data['Projects']);
-            populateSections('Education', data['Education']);
-            populateSkills(data['Skills']);
+            try {
+                populateSections('Personal Info', [data['Personal Info']]);
+            } catch (error) {
+                console.error('Error populating Personal Info:', error);
+            }
+
+            try {
+                populateSections('Work Experience', data['Work Experience']);
+            } catch (error) {
+                console.error('Error populating Work Experience:', error);
+            }
+
+            try {
+                populateSections('Projects', data['Projects']);
+            } catch (error) {
+                console.error('Error populating Projects:', error);
+            }
+
+            try {
+                populateSections('Education', data['Education']);
+            } catch (error) {
+                console.error('Error populating Education:', error);
+            }
+
+            try {
+                populateSkills(data['Skills']);
+            } catch (error) {
+                console.error('Error populating Skills:', error);
+            }
+        }
+
+        function fetchJobData() {
+            const job = {{ job | tojson }};
+            const spinner = document.getElementById('loading-spinner');
+            const job_skills = document.getElementById('job-skills');
+            spinner.style.display = 'block';
+
+            fetch('/api/JD', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ JD: job })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    spinner.style.display = 'none';
+                    job_skills.style.display = 'block';
+                    populateJobSkills(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching job data:', error);
+                    spinner.style.display = 'none';
+                });
         }
 
         function populateSections(sectionId, sectionData) {
             const section = document.getElementById(sectionId.toLowerCase().replace(" ", "-"));
+            section.innerHTML = '';  // Clear previous content
             sectionData.forEach((item, index) => {
                 addSection(sectionId, item, index);
             });
@@ -64,10 +145,80 @@
         function addNewSection(sectionId) {
             addSection(sectionId);
         }
+
+        function populateSkills(skills) {
+            const section = document.getElementById('skills');
+            section.innerHTML = '';  // Clear previous content
+
+            skills = skills.split("\n");
+            addSkillsSection("Skills", skills);
+        }
+
+        function addSkillsSection(category, skills) {
+            const section = document.getElementById('skills');
+            const div = document.createElement('div');
+            div.className = 'skills-category mb-4 p-4 border rounded-lg';
+            let fieldsHtml = `<h3 class="text-xl font-semibold mb-2">${category}</h3>`;
+
+            skills.forEach((skill, index) => {
+                fieldsHtml += `
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="${category}-${index}">
+                            Skill ${index + 1}
+                        </label>
+                        <input type="text" id="${category}-${index}" name="${category}[${index}]" value="${skill}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+                    </div>
+                `;
+            });
+
+            fieldsHtml += `<button type="button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="addSkill('${category}')">Add Skill</button>`;
+
+            div.innerHTML = fieldsHtml;
+            section.appendChild(div);
+        }
+
+        function addSkill(category) {
+            const section = document.getElementById('skills');
+            const categoryDiv = Array.from(section.getElementsByClassName('skills-category')).find(div => div.querySelector('h3').textContent === category);
+            const newIndex = categoryDiv.querySelectorAll('input').length;
+            const fieldsHtml = `
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="${category}-${newIndex}">
+                        Skill ${newIndex + 1}
+                    </label>
+                    <input type="text" id="${category}-${newIndex}" name="${category}[${newIndex}]" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+                </div>
+            `;
+            const button = categoryDiv.querySelector('button');
+            button.insertAdjacentHTML('beforebegin', fieldsHtml);
+        }
+
+        function populateJobSkills(jobSkills) {
+            const jobSkillsSection = document.getElementById('job-skills');
+            jobSkillsSection.innerHTML = ''; // Clear previous content
+            jobSkills.forEach((skill, index) => {
+                const div = document.createElement('div');
+                div.className = 'mb-4';
+                div.innerHTML = `
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="job-skill-${index}">
+                        Job Skill ${index + 1}
+                    </label>
+                    <input type="text" id="job-skill-${index}" value="${skill}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" readonly />
+                `;
+                jobSkillsSection.appendChild(div);
+            });
+        }
     </script>
 </head>
-<body onload="displayJson()" class="bg-gray-100 p-6">
+<body class="bg-gray-100 p-6">
    
+
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Job Skills Required</h2>
+        <div id="loading-spinner" class="loading-spinner"></div>
+        <div class="srollable-skills" id="job-skills"></div>
+    </div>
+
     <div class="mb-8">
         <h2 class="text-2xl font-bold mb-4">Personal Info</h2>
         <div id="personal-info"></div>
@@ -85,16 +236,20 @@
         <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Projects')">Add Project</button>
     </div>
 
-
-
     <div class="mb-8">
         <h2 class="text-2xl font-bold mb-4">Education</h2>
         <div id="education"></div>
         <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Education')">Add Education</button>
     </div>
 
-    <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML</h1>
-    <pre id="jsonData" class="mb-6 bg-white p-4 border rounded-lg"></pre>
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Skills</h2>
+        <div class="srollable-skills" id="skills"></div>
+    </div>
 
+  
+
+    <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML</h1>
+    <pre id="jsonData" class="overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
 </body>
 </html>

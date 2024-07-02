@@ -8,9 +8,9 @@ from spacy.pipeline import EntityRuler
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk import pos_tag, ne_chunk
 
-# nltk.download('averaged_perceptron_tagger')
-# nltk.download('maxent_ne_chunker')
-# nltk.download('words')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")

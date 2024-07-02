@@ -1,98 +1,17 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, send_file, render_template_string
-from werkzeug.utils import secure_filename
+
 import os
 import subprocess
-from PyPDF2 import PdfReader
-from job_parser.job_parser import jd_parser  # Correct import
-from resume_parser.resume_parser import parse_resume
-from io import BytesIO
-import matplotlib
-matplotlib.use('Agg')  # Use Agg backend for non-interactive environments
-import matplotlib.pyplot as plt
 
+# LaTeX document content
+content = r'''
 
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%------------------------
 
-resume_parser_bp = Blueprint('resume_parser', __name__)
-
-UPLOAD_FOLDER = 'uploads'
-GENERATED_FOLDER = 'generated'
-ALLOWED_EXTENSIONS = {'pdf'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def extract_text_from_pdf(pdf_path):
-    text = ''
-    with open(pdf_path, 'rb') as f:
-        reader = PdfReader(f)
-        for page in reader.pages:
-            text += page.extract_text()
-    return text
-
-def create_latex_file(latex_code, filename="document.tex"):
-    with open(filename, "w") as f:
-        f.write(latex_code)
-
-def compile_latex_to_pdf(latex_filename):
-    try:
-        subprocess.run(["pdflatex", latex_filename], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error during LaTeX compilation: {e}")
-    pdf_filename = latex_filename.replace(".tex", ".pdf")
-    return pdf_filename
-
-@resume_parser_bp.route('/', methods=['GET'])
-def upload_form():
-    return render_template('upload_resume.html')
-
-
-
-@resume_parser_bp.route('/', methods=['POST'])
-def upload_file():
-    if 'resume' not in request.files:
-        flash('No file part')
-        return redirect(url_for('resume_parser.upload_form'))
-
-    file = request.files['resume']
-    job = request.form['job']
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(url_for('resume_parser.upload_form'))
-
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(file_path)
-        
-        try:
-            text = extract_text_from_pdf(file_path)
-            parsed_data = parse_resume(text)
-            return render_template('result.html', data=parsed_data, job=job)
-        except Exception as e:
-            flash(f'An error occurred while processing the file: {e}')
-            return redirect(url_for('resume_parser.upload_form'))
-    else:
-        flash('Invalid file type. Only PDF files are allowed.')
-        return redirect(url_for('resume_parser.upload_form'))
-
-
-@resume_parser_bp.route('/api/JD', methods=['POST'])
-def upload_jd_form():
-    JD = request.json.get('JD')
-    print(JD)
-    data = jd_parser(JD)
-    return jsonify(data)
-    
-    
-from flask import Blueprint, request, send_file
-import matplotlib.pyplot as plt
-from io import BytesIO
-
-resume_parser_bp = Blueprint('resume_parser_bp', __name__)
-
-@resume_parser_bp.route('/latex', methods=['GET'])
-def latexPreview():
-    latex_code = request.args.get('latex', r"""
 \documentclass[letterpaper,11pt]{article}
 
 \usepackage{latexsym}
@@ -331,55 +250,28 @@ def latexPreview():
 %-------------------------------------------
 \end{document}
 
-    """)
+'''
 
-    fig, ax = plt.subplots()
-    ax.text(0.5, 0.5, latex_code, fontsize=20, ha='center', va='center')
-    ax.axis('off')
+# Write LaTeX content to cover.tex
+with open('cover.tex', 'w') as f:
+    f.write(content)
 
-    output = BytesIO()
-    plt.savefig(output, format='png')
-    plt.close(fig)
-    output.seek(0)
+# Run pdflatex to create the PDF
+cmd = ['pdflatex', '-interaction', 'nonstopmode', 'cover.tex']
+proc = subprocess.Popen(cmd)
+proc.communicate()
 
-    return send_file(output, mimetype='image/png')
+# Check for errors and handle output
+retcode = proc.returncode
+if not retcode == 0:
+    os.unlink('cover.pdf')
+    raise ValueError('Error {} executing command: {}'.format(retcode, ' '.join(cmd)))
 
-@resume_parser_bp.route('/latex_preview', methods=['GET', 'POST'])
-def latex_preview_form():
-    if request.method == 'POST':
-        latex_code = request.form['latex']
-        img_url = url_for('resume_parser.latexPreview', latex=latex_code)
-        return render_template_string('''
-            <!doctype html>
-            <title>Render LaTeX</title>
-            <h1>Render LaTeX to Image</h1>
-            <form method="post">
-                <textarea name="latex" rows="10" cols="50">{{ latex_code }}</textarea>
-                <br>
-                <input type="submit" value="Render">
-            </form>
-            {% if img_url %}
-                <h2>Rendered Image:</h2>
-                <img src="{{ img_url }}" alt="LaTeX Image">
-            {% endif %}
-        ''', img_url=img_url, latex_code=latex_code)
-    return render_template_string('''
-        <!doctype html>
-        <title>Render LaTeX</title>
-        <h1>Render LaTeX to Image</h1>
-        <form method="post">
-            <textarea name="latex" rows="10" cols="50">\\frac{a}{b}</textarea>
-            <br>
-            <input type="submit" value="Render">
-        </form>
-    ''')
+# Clean up auxiliary files
+os.unlink('cover.tex')
+os.unlink('cover.log')
+os.unlink('cover.aux')
 
-
-if __name__ == '__main__':
-    from flask import Flask
-    app = Flask(__name__)
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    app.config['GENERATED_FOLDER'] = GENERATED_FOLDER
-    app.secret_key = 'supersecretkey'
-    app.register_blueprint(resume_parser_bp, url_prefix='/resume_parser')
-    app.run(debug=True)
+# Display the generated PDF
+from IPython.display import FileLink, display
+display(FileLink('cover.pdf'))

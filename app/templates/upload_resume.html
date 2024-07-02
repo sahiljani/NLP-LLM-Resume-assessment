@@ -3,30 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <title>Upload Resume</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background: url('https://via.placeholder.com/1920x1080') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        h1, label {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload Your Resume</h1>
-    <form action="{{ url_for('resume_parser.upload_file') }}" method="post" enctype="multipart/form-data">
-        <div>
-            <label for="resume">Choose PDF Resume:</label>
-            <input type="file" id="resume" name="resume" accept=".pdf">
-        </div>
-        <div>
-            <label for="job">Job Description:</label>
-            <textarea id="job" name="job" rows="4" cols="50"></textarea>
-        </div>
-        <button type="submit">Upload</button>
-    </form>
+    <div class="container">
+        <h1 class="text-center mb-4">Upload Your Resume</h1>
+        <form action="{{ url_for('resume_parser.upload_file') }}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            <div class="form-group">
+                <label for="resume">Choose PDF Resume:</label>
+                <input type="file" class="form-control" id="resume" name="resume" accept=".pdf" required>
+                <div class="invalid-feedback">Please select a PDF file.</div>
+            </div>
+            <div class="form-group">
+                <label for="job">Job Description:</label>
+                <textarea class="form-control" id="job" name="job" rows="12" required></textarea>
+                <div class="invalid-feedback">Please enter a job description.</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Upload</button>
+        </form>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul>
-          {% for message in messages %}
-            <li>{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert alert-info mt-4" role="alert">
+              {% for message in messages %}
+                <p>{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
 </body>
 </html>

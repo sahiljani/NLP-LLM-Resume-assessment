@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 import os
 import subprocess
 from PyPDF2 import PdfReader
+from resume_parser.gemini import generate_structured_json
 
 from job_parser.job_parser import jd_parser  # Correct import
 from resume_parser.resume_parser import parse_resume
@@ -93,6 +94,18 @@ def recheck():
 
     return jsonify(suggestions=suggestions)
 
+@resume_parser_bp.route('/api/rewrite', methods=['POST'])
+def rewrite():
+    data = request.json.get('data', "")
+    prompt = f"""
+    Rewrite the following RESPONSIBILITY in an ATS-friendly manner, ensuring the description is between 20 to 30 words and includes specific metrics:
+    
+    '{data}' Return the result as a JSON object with the key 'response'.
+    """
+    
+    # Simulating the response from some external function like an AI model
+    response = generate_structured_json(prompt)  # You need to implement this function
+    return jsonify(response)
 
 
 if __name__ == '__main__':

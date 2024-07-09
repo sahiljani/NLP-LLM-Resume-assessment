@@ -7,6 +7,35 @@
     <title>JSON in HTML</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
+        #suggestions {
+            max-height: 200px;
+            /* Adjust height as needed */
+            overflow-y: auto;
+            scrollbar-width: thin;
+            /* For Firefox */
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+            /* For Chrome, Edge, and Safari */
+        }
+
+        #suggestions::-webkit-scrollbar {
+            width: 6px;
+            /* Adjust scrollbar width as needed */
+        }
+
+        #suggestions::-webkit-scrollbar-track {
+            background: transparent;
+            /* Adjust scrollbar track color as needed */
+        }
+
+        #suggestions::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            /* Adjust scrollbar thumb color as needed */
+            border-radius: 3px;
+            /* Adjust scrollbar thumb border radius as needed */
+        }
+
+
+
         .scrollable-skills {
             overflow: auto;
             overflow-x: scroll;
@@ -38,72 +67,74 @@
         }
     </style>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             displayJson();
             fetchJobData();
         });
 
         function displayJson() {
-            const data = {{ data | tojson }};
-            document.getElementById('jsonData').textContent = JSON.stringify(data, null, 4);
+            const data = {{ data | tojson
+        }};
+        document.getElementById('jsonData').textContent = JSON.stringify(data, null, 4);
 
-            // Populate input fields based on JSON data
-            try {
-                populateSections('Personal Info', [data['Personal Info']]);
-            } catch (error) {
-                console.error('Error populating Personal Info:', error);
-            }
+        // Populate input fields based on JSON data
+        try {
+            populateSections('Personal Info', [data['Personal Info']]);
+        } catch (error) {
+            console.error('Error populating Personal Info:', error);
+        }
 
-            try {
-                populateSections('Work Experience', data['Work Experience']);
-            } catch (error) {
-                console.error('Error populating Work Experience:', error);
-            }
+        try {
+            populateSections('Work Experience', data['Work Experience']);
+        } catch (error) {
+            console.error('Error populating Work Experience:', error);
+        }
 
-            try {
-                populateSections('Projects', data['Projects']);
-            } catch (error) {
-                console.error('Error populating Projects:', error);
-            }
+        try {
+            populateSections('Projects', data['Projects']);
+        } catch (error) {
+            console.error('Error populating Projects:', error);
+        }
 
-            try {
-                populateSections('Education', data['Education']);
-            } catch (error) {
-                console.error('Error populating Education:', error);
-            }
+        try {
+            populateSections('Education', data['Education']);
+        } catch (error) {
+            console.error('Error populating Education:', error);
+        }
 
-            try {
-                populateSkills(data['Skills']);
-            } catch (error) {
-                console.error('Error populating Skills:', error);
-            }
+        try {
+            populateSkills(data['Skills']);
+        } catch (error) {
+            console.error('Error populating Skills:', error);
+        }
         }
 
         function fetchJobData() {
-            const job = {{ job | tojson }};
-            const spinner = document.getElementById('loading-spinner');
-            const job_skills = document.getElementById('job-skills');
-            spinner.style.display = 'block';
+            const job = {{ job | tojson
+        }};
+        const spinner = document.getElementById('loading-spinner');
+        const job_skills = document.getElementById('job-skills');
+        spinner.style.display = 'block';
 
-            fetch('/api/JD', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        JD: job
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    spinner.style.display = 'none';
-                    job_skills.style.display = 'block';
-                    populateJobSkills(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching job data:', error);
-                    spinner.style.display = 'none';
-                });
+        fetch('/api/JD', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                JD: job
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                job_skills.style.display = 'block';
+                populateJobSkills(data);
+            })
+            .catch(error => {
+                console.error('Error fetching job data:', error);
+                spinner.style.display = 'none';
+            });
         }
 
         function populateSections(sectionId, sectionData) {
@@ -122,39 +153,41 @@
             let fieldsHtml = `<h3 class="text-xl font-semibold mb-2">${sectionId} ${sectionId === 'Personal Info' ? '' : newIndex + 1}</h3>`;
 
             for (const key in item) {
-    console.log(key);
-    const value = item[key];
-    let inputType = 'text';
-    
-    if (key.toLowerCase().includes('description')) {
-        inputType = 'textarea';
-    }
+                console.log(key);
+                const value = item[key];
+                let inputType = 'text';
 
-    if (key === 'responsibilities' && Array.isArray(value)) {
-        value.forEach((responsibility, index) => {
-            fieldsHtml += `
+                if (key.toLowerCase().includes('description')) {
+                    inputType = 'textarea';
+                }
+
+                if (key === 'responsibilities' && Array.isArray(value)) {
+                    value.forEach((responsibility, index) => {
+                        fieldsHtml += `
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}-${index}">
                         Responsibility ${index + 1}
                     </label>
                     <input type="text" id="${key}-${newIndex}-${index}" name="${sectionId}[${newIndex}][${key}][${index}]" value="${responsibility}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+
+                    <span onclick="rewritecontent(event)">Rewrite</span>
                 </div>
             `;
-        });
-    } else {
-        fieldsHtml += `
+                    });
+                } else {
+                    fieldsHtml += `
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}">
                     ${key}
                 </label>
-                ${inputType === 'textarea' ? 
-                    `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
-                    `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />`
-                }
+                ${inputType === 'textarea' ?
+                            `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
+                            `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />`
+                        }
             </div>
         `;
-    }
-}
+                }
+            }
 
             if (sectionId !== 'Personal Info') {
                 fieldsHtml += `<button type="button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="removeSection(this)">Remove</button>`;
@@ -245,30 +278,53 @@
         }
 
         function recheckDetails() {
-            const data = {{ data | tojson }};
-            const jobSkills = Array.from(document.querySelectorAll('#job-skills input')).map(input => input.value);
+            const data = {{ data | tojson
+        }};
+        const jobSkills = Array.from(document.querySelectorAll('#job-skills input')).map(input => input.value);
 
-            fetch('/api/recheck', {
+        fetch('/api/recheck', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: data,
+                jobSkills: jobSkills
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recheck result:', data);
+                displaySuggestions(data.suggestions);
+
+                // Handle the response data, e.g., display suggestions or errors
+            })
+            .catch(error => {
+                console.error('Error rechecking details:', error);
+            });
+        }
+
+     
+        function rewritecontent(e) {
+            const inputField = e.currentTarget.previousElementSibling;
+            const content = inputField.value;
+
+            fetch('/api/rewrite', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    data: data,
-                    jobSkills: jobSkills
-                })
+                body: JSON.stringify({ data: content }),
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Recheck result:', data);
-                displaySuggestions(data.suggestions);
-
-                    // Handle the response data, e.g., display suggestions or errors
+                    inputField.value = data.response;
                 })
-                .catch(error => {
-                    console.error('Error rechecking details:', error);
+                .catch((error) => {
+                    console.error('Error:', error);
                 });
         }
+
     </script>
 </head>
 
@@ -288,19 +344,22 @@
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Work Experience</h2>
             <div id="work-experience"></div>
-            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden " onclick="addNewSection('Work Experience')">Add Work Experience</button>
+            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden "
+                onclick="addNewSection('Work Experience')">Add Work Experience</button>
         </div>
 
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Projects</h2>
             <div id="projects"></div>
-            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden " onclick="addNewSection('Projects')">Add Project</button>
+            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden "
+                onclick="addNewSection('Projects')">Add Project</button>
         </div>
 
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Education</h2>
             <div id="education"></div>
-            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden " onclick="addNewSection('Education')">Add Education</button>
+            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 roundedhidden "
+                onclick="addNewSection('Education')">Add Education</button>
         </div>
 
         <div class="mb-8">
@@ -315,10 +374,11 @@
     <div class="w-full lg:w-1/4 lg:pl-6">
         <div class="fixed top-4 bg-white p-4 border rounded-lg shadow-md">
             <h2 class="text-xl font-bold mb-4">Suggestions</h2>
-            <ul id="suggestions" class="list-disc pl-5 space-y-2">
-              
+            <ul id="suggestions" class="list-unstyled">
+
             </ul>
-            <button type="button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mt-4" onclick="recheckDetails()">Recheck</button>
+            <button type="button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mt-4"
+                onclick="recheckDetails()">Recheck</button>
 
         </div>
     </div>

@@ -1,86 +1,229 @@
-from pylatex import Document, Section, Subsection, Command, Tabular, NewLine, LineBreak
-from pylatex.utils import NoEscape
+import subprocess
+import os
+import re
 
+def escape_latex_special_chars(text):
+    special_chars = {
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\textasciicircum{}',
+        '\\': r'\textbackslash{}'
+    }
+    regex = re.compile('|'.join(re.escape(key) for key in special_chars.keys()))
+    return regex.sub(lambda match: special_chars[match.group()], text)
 
-def generate_resume():
-    data = {
-    "Education": [],
-    "Personal Info": {
-        "Email": "divyapatel4572@gmail.com",
-        "GitHub": "github.com/DivyaPatel304",
-        "LinkedIn": "linkedin.com/in/iamdivyapatel",
-        "Location": "Canada",
-        "Name": "Divya Patel",
-        "Phone": "437-799-2908"
-    },
-    "Projects": [
-        {
-            "Description": "Music Recommendation System |Python, TensorFlow, Flask Feb 2024 - Apr 2024 \u2022Built a music recommendation system using Python and TensorFlow, handling a database of 120,000+ songs with recommendations generated in just 300ms. \u2022Implemented content-based filtering and cosine similarity for tailored song recommendations. Georgian College Auto Show |React Native, Firebase, Google Maps API May 2023 \u2013 Aug 2023 \u2022Led the development of an advanced mobile app for Georgian College\u2019s auto shows using React Native, Firebase, and Google Maps API, featuring dynamic ticketing, interactive location viewing, and real-time event notifications. \u2022Maintained proactive client communication to ensure alignment and successful project deployment. Push Notification Platform |Node.js, React.js, Google Firebase May 2021 - Aug 2021 \u2022Developed an innovative SaaS push notification platform using PHP, Next.js, and Google Firebase Cloud Messaging, designed to deliver targeted notifications efficiently. \u2022Achieved under 100 milliseconds latency and over 98% delivery success rate through optimized algorithms."
-        }
-    ],
-    "Skills": "",
-    "Work Experience": [
-        {
-            "company": "Cyberstrek Technologies",
-            "dateRange": "Jun 2021 - Jan 2023",
-            "jobTitle": "Web Developer",
-            "location": "Ahmedabad - India",
-            "responsibilities": [
-                "Leveraged Node.js for backend development and MySQL for database optimization to boost server-side processes by 40% and elevate application performance by 30%.",
-                "Directed the entire process from gathering client requirements to crafting tailored solutions, deploying, monitoring, and debugging multiple web applications.",
-                "Sustained ongoing support for 20 web applications, ensuring 95% client satisfaction through rapid issue resolution."
-            ]
-        },
-        {
-            "company": "Euroteck India",
-            "dateRange": "Dec 2021 - May 2021",
-            "jobTitle": "Software Developer - Internship",
-            "location": "Ahmedabad - India",
-            "responsibilities": [
-                "Developed an advanced ERP system for Euroteck India using MySQL and Flask; increased resource allocation accuracy by 35% and reduced inventory discrepancies by 20%, optimizing overall workflow.",
-                "Seamlessly transitioned paper-based workflows into the ERP within 6 months, significantly improving efficiency.",
-                "Advanced continuous improvement processes by regularly updating based on comprehensive bug analytics and client feedback, resulting in a 70% reduction in client-reported issues."
-            ]
-        }
-    ]
-}
+def generate_latex_from_json(data):
+    latex_code = r'''
+    \documentclass[letterpaper,11pt]{article}
+    \usepackage{latexsym}
+    \usepackage[empty]{fullpage}
+    \usepackage{titlesec}
+    \usepackage{marvosym}
+    \usepackage[usenames,dvipsnames]{color}
+    \usepackage{verbatim}
+    \usepackage{enumitem}
+    \usepackage[hidelinks]{hyperref}
+    \usepackage{fancyhdr}
+    \usepackage[english]{babel}
+    \usepackage{tabularx}
+    \input{glyphtounicode}
 
-    doc = Document()
+    \pagestyle{fancy}
+    \fancyhf{} % clear all header and footer fields
+    \fancyfoot{}
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
+
+    \addtolength{\oddsidemargin}{-0.5in}
+    \addtolength{\evensidemargin}{-0.5in}
+    \addtolength{\textwidth}{1in}
+    \addtolength{\topmargin}{-.5in}
+    \addtolength{\textheight}{1.0in}
+
+    \urlstyle{same}
+
+    \raggedbottom
+    \raggedright
+    \setlength{\tabcolsep}{0in}
+
+    \titleformat{\section}{
+      \vspace{-4pt}\scshape\raggedright\large
+    }{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+    \pdfgentounicode=1
+
+    \newcommand{\resumeItem}[1]{
+      \item\small{
+        {#1 \vspace{-2pt}}
+      }
+    }
+
+    \newcommand{\resumeSubheading}[4]{
+      \vspace{-2pt}\item
+        \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+          \textbf{#1} & #2 \\
+          \textit{\small#3} & \textit{\small #4} \\
+        \end{tabular*}\vspace{-7pt}
+    }
+
+    \newcommand{\resumeSubSubheading}[2]{
+        \item
+        \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+          \textit{\small#1} & \textit{\small #2} \\
+        \end{tabular*}\vspace{-7pt}
+    }
+
+    \newcommand{\resumeProjectHeading}[2]{
+        \item
+        \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+          \small#1 & #2 \\
+        \end{tabular*}\vspace{-7pt}
+    }
+
+    \newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+    \renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+    \newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+    \newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+    \newcommand{\resumeItemListStart}{\begin{itemize}}
+    \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+    \begin{document}
+    '''
+
+    # Personal Info Section
+    personal_info_list = data.get("Personal Info", [])
+    if personal_info_list:
+        personal_info = personal_info_list[0]  # Assuming only one set of personal info
+        latex_code += r'''
+        \begin{center}
+            \textbf{\Huge \scshape ''' + escape_latex_special_chars(personal_info.get("Name", "")) + r'''} \\ \vspace{1pt}
+            \small ''' + escape_latex_special_chars(personal_info.get("Phone", "")) + r''' $|$ \href{mailto:''' + escape_latex_special_chars(personal_info.get("Email", "")) + r'''}{\underline{''' + escape_latex_special_chars(personal_info.get("Email", "")) + r'''}} $|$ ''' + escape_latex_special_chars(personal_info.get("Location", "")) + r''' $|$ 
+            \href{''' + escape_latex_special_chars(personal_info.get("LinkedIn", "")) + r'''}{\underline{''' + escape_latex_special_chars(personal_info.get("LinkedIn", "")) + r'''}} $|$
+            \href{''' + escape_latex_special_chars(personal_info.get("GitHub", "")) + r'''}{\underline{''' + escape_latex_special_chars(personal_info.get("GitHub", "")) + r'''}} 
+        \end{center}
+        '''
+
+    # Work Experience Section
+    work_experience = data.get("Work Experience", [])
+    if work_experience:
+        latex_code += r'''
+        \section{Experience}
+          \resumeSubHeadingListStart
+        '''
+        for job in work_experience:
+            latex_code += r'''
+            \resumeSubheading
+              {''' + escape_latex_special_chars(job.get("jobTitle", "")) + r'''}{''' + escape_latex_special_chars(job.get("dateRange", "")) + r'''}
+              {''' + escape_latex_special_chars(job.get("company", "")) + r'''}{''' + escape_latex_special_chars(job.get("location", "")) + r'''}
+              \resumeItemListStart
+            '''
+            for responsibility in job.get("responsibilities", []):
+                latex_code += r'''
+                \resumeItem{''' + escape_latex_special_chars(responsibility) + r'''}
+                '''
+            latex_code += r'''
+              \resumeItemListEnd
+            '''
+        latex_code += r'''
+          \resumeSubHeadingListEnd
+        '''
+
+    # Projects Section
+    projects = data.get("Projects", [])
+    if projects:
+        latex_code += r'''
+        \section{Projects}
+          \resumeSubHeadingListStart
+        '''
+        for project in projects:
+            descriptions = project.get("Description", "").split("•")
+            project_title = escape_latex_special_chars(descriptions[0].strip())
+            project_details = descriptions[1:]
+            latex_code += r'''
+            \resumeProjectHeading
+              {''' + project_title + r'''}{}
+              \resumeItemListStart
+            '''
+            for detail in project_details:
+                if detail.strip():
+                    latex_code += r'''
+                    \resumeItem{''' + escape_latex_special_chars(detail.strip()).replace("(", r"\href{").replace(")", r"}{\underline{Github}}") + r'''}
+                    '''
+            latex_code += r'''
+              \resumeItemListEnd
+            '''
+        latex_code += r'''
+          \resumeSubHeadingListEnd
+        '''
+
+    # Skills Section
+    skills = data.get("Skills", "")
+    if skills:
+        latex_code += r'''
+        \section{Technical Skills}
+        \begin{itemize}[leftmargin=0.15in, label={}]
+            \small{\item{
+             \textbf{Skills}: ''' + escape_latex_special_chars(skills).replace("\n", ", ") + r'''
+            }}
+        \end{itemize}
+        '''
+
+    # Education Section
+    education = data.get("Education", [])
+    if education:
+        latex_code += r'''
+        \section{Education}
+          \resumeSubHeadingListStart
+        '''
+        for edu in education:
+            latex_code += r'''
+            \resumeSubheading
+              {''' + escape_latex_special_chars(edu.get("Institution", "")) + r'''}{''' + escape_latex_special_chars(edu.get("Start Year", "") + " -- " + escape_latex_special_chars(edu.get("End Year", ""))) + r'''}
+              {''' + escape_latex_special_chars(edu.get("Degree", "")) + r'''}{}
+            '''
+        latex_code += r'''
+          \resumeSubHeadingListEnd
+        '''
+
+    latex_code += r'''
+    \end{document}
+    '''
     
-    # Personal Info
-    with doc.create(Section('Personal Information')):
-        doc.append(f"Name: {data['Personal Info']['Name']}")
-        doc.append(LineBreak())
-        doc.append(f"Location: {data['Personal Info']['Location']}")
-        doc.append(LineBreak())
-        doc.append(f"Phone: {data['Personal Info']['Phone']}")
-        doc.append(LineBreak())
-        doc.append(f"Email: {data['Personal Info']['Email']}")
-        doc.append(LineBreak())
-        doc.append(f"GitHub: {data['Personal Info']['GitHub']}")
-        doc.append(LineBreak())
-        doc.append(f"LinkedIn: {data['Personal Info']['LinkedIn']}")
+    return latex_code
 
-    # Work Experience
-    with doc.create(Section('Work Experience')):
-        for experience in data['Work Experience']:
-            with doc.create(Subsection(experience['company'])):
-                doc.append(f"Job Title: {experience['jobTitle']} ({experience['dateRange']})")
-                doc.append(LineBreak())
-                doc.append(f"Location: {experience['location']}")
-                doc.append(LineBreak())
-                doc.append("Responsibilities:")
-                doc.append(LineBreak())
-                for responsibility in experience['responsibilities']:
-                    doc.append(f"- {responsibility}")
-                    doc.append(LineBreak())
+def latex_to_pdf(latex_code, output_pdf, output_folder='output'):
+    # Ensure the output folder exists
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Create a temporary LaTeX file
+    temp_tex_path = os.path.join(output_folder, 'temp.tex')
+    with open(temp_tex_path, 'w') as f:
+        f.write(latex_code)
 
-    # Projects
-    with doc.create(Section('Projects')):
-        for project in data['Projects']:
-            doc.append(project['Description'].replace("\u2022", "-").replace("\u2013", "-"))
-            doc.append(LineBreak())
-    # Generate PDF
-    doc.generate_pdf('resume', clean_tex=False)
-    print("Resume generated successfully")
-
+    try:
+        # Run pdflatex to compile the LaTeX file into a PDF
+        subprocess.run(['pdflatex', '-output-directory', output_folder, temp_tex_path], check=True)
+        
+        # Rename the output PDF to the desired output name
+        temp_pdf_path = os.path.join(output_folder, 'temp.pdf')
+        final_pdf_path = os.path.join(output_folder, output_pdf)
+        os.rename(temp_pdf_path, final_pdf_path)
+        
+        return final_pdf_path
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
+        return None
+    finally:
+        # Clean up temporary files
+        for ext in ['aux', 'log', 'tex']:
+            temp_file = os.path.join(output_folder, f'temp.{ext}')
+            if os.path.exists(temp_file):
+                os.remove(temp_file)

@@ -1,12 +1,14 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, send_file
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, send_file, send_from_directory, abort, current_app
+from werkzeug.utils import safe_join
 from werkzeug.utils import secure_filename
 import os
 import subprocess
 from PyPDF2 import PdfReader
 from resume_parser.gemini import generate_structured_json
-
-from job_parser.job_parser import jd_parser  # Correct import
+from job_parser.job_parser import jd_parser  
 from resume_parser.resume_parser import parse_resume
+from resume_parser.LaTeXGen import generate_latex_from_json, latex_to_pdf
+import uuid
 
 resume_parser_bp = Blueprint('resume_parser', __name__)
 
@@ -24,6 +26,26 @@ def extract_text_from_pdf(pdf_path):
         for page in reader.pages:
             text += page.extract_text()
     return text
+OUTPUT_FOLDER = 'output'
+@resume_parser_bp.route('/files/<path:filename>')
+def download_file(filename):
+    try:
+        # Ensure the file path is safe and within the output folder
+        file_path = safe_join(OUTPUT_FOLDER, filename)
+        current_app.logger.debug(f"File path resolved to: {file_path}")
+        
+        # Check if the file exists and log this
+        if os.path.isfile(file_path):
+            current_app.logger.debug(f"File exists: {file_path}")
+            return send_from_directory(OUTPUT_FOLDER, filename, as_attachment=True)
+        else:
+            current_app.logger.error(f"File not found: {file_path}")
+            abort(404)  # File not found
+    except Exception as e:
+        current_app.logger.exception("An error occurred while processing the file download request.")
+        abort(500)  # Internal server error
+
+
 
 @resume_parser_bp.route('/', methods=['GET'])
 def upload_form():
@@ -66,6 +88,7 @@ def upload_jd_form():
     data = jd_parser(JD)
     return jsonify(data)
     
+        
     
 @resume_parser_bp.route('/api/recheck', methods=['POST'])
 def recheck():
@@ -105,6 +128,27 @@ def rewrite():
     
     # Simulating the response from some external function like an AI model
     response = generate_structured_json(prompt)  # You need to implement this function
+    return jsonify(response)
+
+
+@resume_parser_bp.route('API/generate_pdf', methods=['POST'])
+def generate_pdf():
+    data = request.json
+    latex_code = generate_latex_from_json(data)
+    # unique file name
+    output_pdf = f"{uuid.uuid4()}.pdf"
+    pdf_path = latex_to_pdf(latex_code, output_pdf)
+    
+    if pdf_path:
+        response = {
+            "message": "PDF generated successfully",
+            "pdf_path": output_pdf
+        }
+    else:
+        response = {
+            "message": "An error occurred during PDF generation"
+        }
+    
     return jsonify(response)
 
 

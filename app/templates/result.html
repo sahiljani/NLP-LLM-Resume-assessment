@@ -380,7 +380,7 @@
                 if (responseData.pdf_path) {
                     const link = document.createElement('a');
                     link.href = "files/" +  responseData.pdf_path;
-                    link.textContent = 'Download PDF';
+                    link.textContent = responseData.pdf_path;
                     document.body.appendChild(link);
                 } else {
                     alert('An error occurred: ' + responseData.message);

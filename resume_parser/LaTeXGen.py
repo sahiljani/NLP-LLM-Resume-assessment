@@ -200,6 +200,7 @@ def generate_latex_from_json(data):
     return latex_code
 
 def latex_to_pdf(latex_code, output_pdf, output_folder='output'):
+    output_folder = "app/newoutput"
     # Ensure the output folder exists
     os.makedirs(output_folder, exist_ok=True)
     

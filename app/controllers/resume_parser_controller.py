@@ -23,6 +23,10 @@ ALLOWED_EXTENSIONS = {'pdf'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def shorten_text(text, max_length=10):
+    return (text[:max_length] + '...') if len(text) > max_length else text
+
+
 def extract_text_from_pdf(pdf_path):
     text = ''
     with open(pdf_path, 'rb') as f:
@@ -91,26 +95,29 @@ def upload_jd_form():
     JD = request.json.get('JD')
     data = jd_parser(JD)
     return jsonify(data)
-    
-        
+
+def check_bullet_points(text):
+    lines = text.split('•')
+    bullet_points = [line for line in lines if line.strip().startswith('-') or line.strip().startswith('*') or line.strip()]
+    too_long_bullets = [bp for bp in bullet_points if len(bp.split()) > 20]  # Assuming an average of 20 words per bullet point
+    return (bullet_points), (too_long_bullets)
+
 @resume_parser_bp.route('/api/recheck', methods=['POST'])
 def recheck():
     data = request.json.get('data', {})
     job_skills = request.json.get('jobSkills', [])
     suggestions = []
 
-    
-
     # Check the length of responsibilities in work experience
     if 'Work Experience' in data:
         for experience in data['Work Experience']:
-            if 'responsibilities' in experience:
-                for idx, responsibility in enumerate(experience['responsibilities']):
-                    if len(responsibility) < 50:
-                        suggestions.append({
-                            'type': 'responsibility_length',
-                            'message': f'Responsibility {idx + 1} in job "{experience["jobTitle"]}" is too short.'
-                        })
+            responsibilities = experience.get('responsibilities', experience.get('responsibilities_and_achievements', []))
+            for idx, responsibility in enumerate(responsibilities):
+                if len(responsibility) < 50:
+                    suggestions.append({
+                        'type': 'responsibility_length',
+                        'message': f'Responsibility {idx + 1} in job "{experience["jobTitle"]}" is too short.'
+                    })
 
     # Check for missing skills
     for skill in job_skills:
@@ -130,8 +137,41 @@ def recheck():
         })
     
     repetitiveverbs = repetitive_verbs(json.dumps(data))
+    
+    # Check bullet points length
+    bullet_points_length_issues = []
+    for section in ['Work Experience', 'Projects']:
+        if section in data:
+            for item in data[section]:
+                for key, value in item.items():
+                    if isinstance(value, str):
+                        total_bullets, too_long_bullets = check_bullet_points(value)
+                        if too_long_bullets:
+                            bullet_points_length_issues.append({
+                                'section': section,
+                                'item': item.get('jobTitle', item.get('projectTitle', '')),
+                                'total_bullets': total_bullets,
+                                'too_long_bullets': too_long_bullets
+                            })
+                    elif isinstance(value, list):
+                        for v in value:
+                            if isinstance(v, str):
+                                total_bullets, too_long_bullets = check_bullet_points(v)
+                                if too_long_bullets:
+                                    bullet_points_length_issues.append({
+                                        'section': section,
+                                        'item': item.get('job_title', item.get('job_title', '')),
+                                        'total_bullets': total_bullets,
+                                        'too_long_bullets': too_long_bullets
+                                    })
+    
+    for issue in bullet_points_length_issues:
+        suggestions.append({
+            'type': 'bullet_point_length',
+            'message': f'In {issue["section"]} "{(issue["item"])}", {len(issue["total_bullets"])} bullet points are too long.'
+        })
 
-    return jsonify(suggestions=suggestions,  repetitiveVerbs=repetitiveverbs)
+    return jsonify(suggestions=suggestions, repetitiveVerbs=repetitiveverbs)
 
 
 @resume_parser_bp.route('/api/rewrite', methods=['POST'])

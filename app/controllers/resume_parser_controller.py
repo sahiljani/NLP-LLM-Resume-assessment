@@ -12,7 +12,7 @@ from resume_parser.LaTeXGen import generate_latex_from_json, latex_to_pdf
 import uuid
 from resume_parser.kw import suggest_verbs
 from resume_parser.repetitive_verbs import repetitive_verbs
-
+from resume_parser.filler import detect_filler_words
 
 resume_parser_bp = Blueprint('resume_parser', __name__)
 
@@ -137,6 +137,9 @@ def recheck():
         })
     
     repetitiveverbs = repetitive_verbs(json.dumps(data))
+
+    filler_words = detect_filler_words(json.dumps(data))
+    print(filler_words)
     
     # Check bullet points length
     bullet_points_length_issues = []
@@ -171,7 +174,7 @@ def recheck():
             'message': f'In {issue["section"]} "{(issue["item"])}", {len(issue["total_bullets"])} bullet points are too long.'
         })
 
-    return jsonify(suggestions=suggestions, repetitiveVerbs=repetitiveverbs)
+    return jsonify(suggestions=suggestions, repetitiveVerbs=repetitiveverbs, filler_words=filler_words)
 
 
 @resume_parser_bp.route('/api/rewrite', methods=['POST'])

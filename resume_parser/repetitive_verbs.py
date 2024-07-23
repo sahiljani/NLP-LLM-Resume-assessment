@@ -32,7 +32,7 @@ def repetitive_verbs(json_str):
         json_str,
         data["Skills"],
         ' '.join(proj["Description"] for proj in data["Projects"]),
-        ' '.join(' '.join(exp["responsibilities"]) for exp in data["Work Experience"])
+        ' '.join(' '.join(exp.get("responsibilities", "")) for exp in data.get("Work Experience", []))
     ])
 
     # Remove special characters and brackets

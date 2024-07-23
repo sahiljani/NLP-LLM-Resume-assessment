@@ -272,40 +272,57 @@
         }
 
         function displaySuggestions(suggestions, repetitiveVerbs) {
-            const suggestionsList = document.getElementById('suggestions');
-            suggestionsList.innerHTML = ''; // Clear previous content
+    const suggestionsList = document.getElementById('suggestions');
+    suggestionsList.innerHTML = ''; // Clear previous content
 
-            let weakVerbsTable = '<table class="suggestion-table"><thead><tr><th>Weak Verb</th><th>Suggestion</th></tr></thead><tbody>';
-            let missingSkills = '';
-            let repetitiveVerbsList = '';
+    let weakVerbsTable = '<table class="suggestion-table"><thead><tr><th>Weak Verb</th><th>Suggestion</th></tr></thead><tbody>';
+    let missingSkills = '';
+    let repetitiveVerbsList = '';
+    let bulletPointIssues = '';
+    let responsibilityIssues = '';
 
-            suggestions.forEach(suggestion => {
-                if (suggestion.type === 'missing_skill') {
-                    missingSkills += `<li>${suggestion.message}</li>`;
-                } else if (suggestion.type === 'weak_verb') {
-                    weakVerbsTable += `<tr><td>${suggestion.verb}</td><td>${suggestion.suggestion}</td></tr>`;
-                }
-            });
-
-            weakVerbsTable += '</tbody></table>';
-
-            if (missingSkills) {
-                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Missing Skills</h3><ul>${missingSkills}</ul>`;
-            }
-            suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Weak Verbs</h3>${weakVerbsTable}`;
-
-            // Display repetitive verbs
-            if (Object.keys(repetitiveVerbs).length > 0) {
-                repetitiveVerbsList = '<ul>';
-                for (const [verb, count] of Object.entries(repetitiveVerbs)) {
-                    repetitiveVerbsList += `<li>${verb}: ${count} times</li>`;
-                }
-                repetitiveVerbsList += '</ul>';
-
-                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Repetitive Verbs</h3>${repetitiveVerbsList}`;
-            }
+    suggestions.forEach(suggestion => {
+        if (suggestion.type === 'missing_skill') {
+            missingSkills += `<li>${suggestion.message}</li>`;
+        } else if (suggestion.type === 'weak_verb') {
+            weakVerbsTable += `<tr><td>${suggestion.verb}</td><td>${suggestion.suggestion}</td></tr>`;
+        } else if (suggestion.type === 'bullet_point_length') {
+            bulletPointIssues += `<li>${suggestion.message}</li>`;
+        } else if (suggestion.type === 'responsibility_length') {
+            responsibilityIssues += `<li>${suggestion.message}</li>`;
         }
+    });
 
+    weakVerbsTable += '</tbody></table>';
+
+    if (missingSkills) {
+        suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Missing Skills</h3><ul>${missingSkills}</ul>`;
+    }
+    suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Weak Verbs</h3>${weakVerbsTable}`;
+
+    // Display repetitive verbs
+    if (Object.keys(repetitiveVerbs).length > 0) {
+        repetitiveVerbsList = '<ul>';
+        for (const [verb, count] of Object.entries(repetitiveVerbs)) {
+            repetitiveVerbsList += `<li>${verb}: ${count} times</li>`;
+        }
+        repetitiveVerbsList += '</ul>';
+
+        suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Repetitive Verbs</h3>${repetitiveVerbsList}`;
+    }
+
+    // Display responsibility length issues
+    if (responsibilityIssues) {
+        suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Responsibility Length Issues</h3><ul>${responsibilityIssues}</ul>`;
+    }
+
+    // Display bullet point issues
+    if (bulletPointIssues) {
+        suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Bullet Point Length Issues</h3><ul>${bulletPointIssues}</ul>`;
+    }
+}
+
+      
         function recheckDetails() {
             const data = {{ data | tojson }};
             const jobSkills = Array.from(document.querySelectorAll('#job-skills input')).map(input => input.value);

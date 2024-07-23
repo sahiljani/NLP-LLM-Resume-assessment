@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, redirect, url_fo
 from werkzeug.utils import safe_join
 from werkzeug.utils import secure_filename
 import os
+import json
 import subprocess
 from PyPDF2 import PdfReader
 from resume_parser.gemini import generate_structured_json
@@ -9,6 +10,9 @@ from job_parser.job_parser import jd_parser
 from resume_parser.resume_parser import parse_resume
 from resume_parser.LaTeXGen import generate_latex_from_json, latex_to_pdf
 import uuid
+from resume_parser.kw import suggest_verbs
+from resume_parser.repetitive_verbs import repetitive_verbs
+
 
 resume_parser_bp = Blueprint('resume_parser', __name__)
 
@@ -89,12 +93,13 @@ def upload_jd_form():
     return jsonify(data)
     
         
-    
 @resume_parser_bp.route('/api/recheck', methods=['POST'])
 def recheck():
     data = request.json.get('data', {})
     job_skills = request.json.get('jobSkills', [])
     suggestions = []
+
+    
 
     # Check the length of responsibilities in work experience
     if 'Work Experience' in data:
@@ -107,7 +112,7 @@ def recheck():
                             'message': f'Responsibility {idx + 1} in job "{experience["jobTitle"]}" is too short.'
                         })
 
-    # Example check for matching job skills (extend as needed)
+    # Check for missing skills
     for skill in job_skills:
         if skill not in data.get('Skills', ''):
             suggestions.append({
@@ -115,7 +120,19 @@ def recheck():
                 'message': f'Skill "{skill}" is required for the job but is not listed in the skills section.'
             })
 
-    return jsonify(suggestions=suggestions)
+    # Check for weak verbs
+    verb_suggestions = suggest_verbs(json.dumps(data))
+    for verb in verb_suggestions['matched_verbs']:
+        suggestions.append({
+            'type': 'weak_verb',
+            'verb': verb,
+            'suggestion': ", ".join(verb_suggestions['suggestions'][verb])
+        })
+    
+    repetitiveverbs = repetitive_verbs(json.dumps(data))
+
+    return jsonify(suggestions=suggestions,  repetitiveVerbs=repetitiveverbs)
+
 
 @resume_parser_bp.route('/api/rewrite', methods=['POST'])
 def rewrite():
@@ -126,13 +143,14 @@ def rewrite():
     '{data}' Return the result as a JSON object with the key 'response'.
     """
     
-    # Simulating the response from some external function like an AI model
-    response = generate_structured_json(prompt)  # You need to implement this function
+
+    response = generate_structured_json(prompt)  
     return jsonify(response)
 
 
 @resume_parser_bp.route('API/generate_pdf', methods=['POST'])
 def generate_pdf():
+    
     data = request.json
     latex_code = generate_latex_from_json(data)
     # unique file name

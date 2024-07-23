@@ -4,34 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON in HTML</title>
+    <title>Resume Checker</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         #suggestions {
             max-height: 200px;
-            /* Adjust height as needed */
             overflow-y: auto;
             scrollbar-width: thin;
-            /* For Firefox */
             scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-            /* For Chrome, Edge, and Safari */
         }
 
         #suggestions::-webkit-scrollbar {
             width: 6px;
-            /* Adjust scrollbar width as needed */
         }
 
         #suggestions::-webkit-scrollbar-track {
             background: transparent;
-            /* Adjust scrollbar track color as needed */
         }
 
         #suggestions::-webkit-scrollbar-thumb {
             background-color: rgba(0, 0, 0, 0.2);
-            /* Adjust scrollbar thumb color as needed */
             border-radius: 3px;
-            /* Adjust scrollbar thumb border radius as needed */
         }
 
         .scrollable-skills {
@@ -63,6 +56,22 @@
         #job-skills {
             display: none;
         }
+
+        .suggestion-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .suggestion-table th,
+        .suggestion-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .suggestion-table th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -74,7 +83,6 @@
             const data = {{ data | tojson }};
             document.getElementById('jsonData').textContent = JSON.stringify(data, null, 4);
 
-            // Populate input fields based on JSON data
             try {
                 populateSections('Personal Info', [data['Personal Info']]);
             } catch (error) {
@@ -135,7 +143,7 @@
 
         function populateSections(sectionId, sectionData) {
             const section = document.getElementById(sectionId.toLowerCase().replace(" ", "-"));
-            section.innerHTML = ''; // Clear previous content
+            section.innerHTML = '';
             sectionData.forEach((item, index) => {
                 addSection(sectionId, item, index);
             });
@@ -149,7 +157,6 @@
             let fieldsHtml = `<h3 class="text-xl font-semibold mb-2">${sectionId} ${sectionId === 'Personal Info' ? '' : newIndex + 1}</h3>`;
 
             for (const key in item) {
-                console.log(key);
                 const value = item[key];
                 let inputType = 'text';
 
@@ -160,28 +167,27 @@
                 if (key === 'responsibilities' && Array.isArray(value)) {
                     value.forEach((responsibility, index) => {
                         fieldsHtml += `
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}-${index}">
-                        Responsibility ${index + 1}
-                    </label>
-                    <input type="text" id="${key}-${newIndex}-${index}" name="${sectionId}[${newIndex}][${key}][${index}]" value="${responsibility}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-
-                    <span onclick="rewritecontent(event)">Rewrite</span>
-                </div>
-            `;
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}-${index}">
+                                    Responsibility ${index + 1}
+                                </label>
+                                <input type="text" id="${key}-${newIndex}-${index}" name="${sectionId}[${newIndex}][${key}][${index}]" value="${responsibility}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+                                <span onclick="rewriteContent(event)" class="text-blue-500 cursor-pointer">Rewrite</span>
+                            </div>
+                        `;
                     });
                 } else {
                     fieldsHtml += `
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}">
-                    ${key}
-                </label>
-                ${inputType === 'textarea' ?
-                            `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
-                            `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />`
-                        }
-            </div>
-        `;
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="${key}-${newIndex}">
+                                ${key}
+                            </label>
+                            ${inputType === 'textarea' ?
+                                `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
+                                `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />`
+                            }
+                        </div>
+                    `;
                 }
             }
 
@@ -204,7 +210,7 @@
 
         function populateSkills(skills) {
             const section = document.getElementById('skills');
-            section.innerHTML = ''; // Clear previous content
+            section.innerHTML = '';
 
             skills = skills.split("\n");
             addSkillsSection("Skills", skills);
@@ -251,7 +257,7 @@
 
         function populateJobSkills(jobSkills) {
             const jobSkillsSection = document.getElementById('job-skills');
-            jobSkillsSection.innerHTML = ''; // Clear previous content
+            jobSkillsSection.innerHTML = '';
             jobSkills.forEach((skill, index) => {
                 const div = document.createElement('div');
                 div.className = 'mb-4';
@@ -265,13 +271,39 @@
             });
         }
 
-        function displaySuggestions(suggestions) {
+        function displaySuggestions(suggestions, repetitiveVerbs) {
             const suggestionsList = document.getElementById('suggestions');
+            suggestionsList.innerHTML = ''; // Clear previous content
+
+            let weakVerbsTable = '<table class="suggestion-table"><thead><tr><th>Weak Verb</th><th>Suggestion</th></tr></thead><tbody>';
+            let missingSkills = '';
+            let repetitiveVerbsList = '';
+
             suggestions.forEach(suggestion => {
-                const li = document.createElement('li');
-                li.textContent = suggestion.message;
-                suggestionsList.appendChild(li);
+                if (suggestion.type === 'missing_skill') {
+                    missingSkills += `<li>${suggestion.message}</li>`;
+                } else if (suggestion.type === 'weak_verb') {
+                    weakVerbsTable += `<tr><td>${suggestion.verb}</td><td>${suggestion.suggestion}</td></tr>`;
+                }
             });
+
+            weakVerbsTable += '</tbody></table>';
+
+            if (missingSkills) {
+                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Missing Skills</h3><ul>${missingSkills}</ul>`;
+            }
+            suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Weak Verbs</h3>${weakVerbsTable}`;
+
+            // Display repetitive verbs
+            if (Object.keys(repetitiveVerbs).length > 0) {
+                repetitiveVerbsList = '<ul>';
+                for (const [verb, count] of Object.entries(repetitiveVerbs)) {
+                    repetitiveVerbsList += `<li>${verb}: ${count} times</li>`;
+                }
+                repetitiveVerbsList += '</ul>';
+
+                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Repetitive Verbs</h3>${repetitiveVerbsList}`;
+            }
         }
 
         function recheckDetails() {
@@ -291,16 +323,14 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Recheck result:', data);
-                    displaySuggestions(data.suggestions);
-
-                    // Handle the response data, e.g., display suggestions or errors
+                    displaySuggestions(data.suggestions, data.repetitiveVerbs);
                 })
                 .catch(error => {
                     console.error('Error rechecking details:', error);
                 });
         }
 
-        function rewritecontent(e) {
+        function rewriteContent(e) {
             const inputField = e.currentTarget.previousElementSibling;
             const content = inputField.value;
 
@@ -375,26 +405,26 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(responseData => {
-                if (responseData.pdf_path) {
-                    const link = document.createElement('a');
-                    link.href = "files/" +  responseData.pdf_path;
-                    link.textContent = responseData.pdf_path;
-                    document.body.appendChild(link);
-                } else {
-                    alert('An error occurred: ' + responseData.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                .then(response => response.json())
+                .then(responseData => {
+                    if (responseData.pdf_path) {
+                        const link = document.createElement('a');
+                        link.href = "files/" + responseData.pdf_path;
+                        link.textContent = responseData.pdf_path;
+                        document.body.appendChild(link);
+                    } else {
+                        alert('An error occurred: ' + responseData.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
-         </script>
+    </script>
 </head>
 
 <body class="bg-gray-100 p-6 flex flex-wrap">
-    <div class="w-full lg:w-3/4">
+    <div class="w-full lg:w-7/12">
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Job Skills Required</h2>
             <div id="loading-spinner" class="loading-spinner"></div>
@@ -433,7 +463,7 @@
         <pre id="jsonData" class="overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
     </div>
 
-    <div class="w-full lg:w-1/4 lg:pl-6">
+    <div class="lg:5/12 lg:pl-6">
         <div class="fixed top-4 bg-white p-4 border rounded-lg shadow-md">
             <h2 class="text-xl font-bold mb-4">Suggestions</h2>
             <ul id="suggestions" class="list-unstyled"></ul>

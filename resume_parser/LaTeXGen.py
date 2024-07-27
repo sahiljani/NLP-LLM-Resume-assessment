@@ -20,6 +20,8 @@ def escape_latex_special_chars(text):
 
 def generate_latex_from_json(data):
     latex_code = r'''
+    \UseRawInputEncoding
+
     \documentclass[letterpaper,11pt]{article}
     \usepackage{latexsym}
     \usepackage[empty]{fullpage}
@@ -121,7 +123,7 @@ def generate_latex_from_json(data):
         for job in work_experience:
             latex_code += r'''
             \resumeSubheading
-              {''' + escape_latex_special_chars(job.get("jobTitle", "")) + r'''}{''' + escape_latex_special_chars(job.get("dateRange", "")) + r'''}
+              {''' + escape_latex_special_chars(job.get("job_title", "")) + r'''}{''' + escape_latex_special_chars(job.get("dateRange", "")) + r'''}
               {''' + escape_latex_special_chars(job.get("company", "")) + r'''}{''' + escape_latex_special_chars(job.get("location", "")) + r'''}
               \resumeItemListStart
             '''

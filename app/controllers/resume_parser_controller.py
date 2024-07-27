@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, send_file, send_from_directory, abort, current_app
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, send_file, send_from_directory, abort, current_app, render_template_string, send_from_directory
 from werkzeug.utils import safe_join
 from werkzeug.utils import secure_filename
 import os
@@ -25,6 +25,48 @@ def allowed_file(filename):
 
 def shorten_text(text, max_length=10):
     return (text[:max_length] + '...') if len(text) > max_length else text
+
+
+
+
+
+# Path to the directory containing PDF files
+PDF_DIRECTORY = 'app/newoutput'
+
+# Ensure the PDF directory exists
+if not os.path.exists(PDF_DIRECTORY):
+    os.makedirs(PDF_DIRECTORY)
+
+@resume_parser_bp.route('/pdfs')
+def list_pdfs():
+    """List all PDF files in the directory."""
+    files = os.listdir(PDF_DIRECTORY)
+    pdf_files = [f for f in files if f.endswith('.pdf')]
+    return render_template_string('''
+        <h1>List of PDF Files</h1>
+        <ul>
+            {% for pdf in pdf_files %}
+                <li><a href="{{ url_for('resume_parser.download_pdf', filename=pdf) }}">{{ pdf }}</a></li>
+            {% endfor %}
+        </ul>
+        ''', pdf_files=pdf_files)
+
+@resume_parser_bp.route('/download/<path:filename>', methods=['GET'])
+def download(filename):
+
+    # "app/newoutput", "7b15c701-8c0a-4636-a50d-c8f89432ad25.pdf" make the path and print
+    path = os.path.join("newoutput", filename)
+    try:
+        return send_file(path, as_attachment=True)
+    except FileNotFoundError:
+        return render_template_string('<h1>File not found</h1>'), 404   
+    
+  
+
+
+
+
+
 
 
 def extract_text_from_pdf(pdf_path):
@@ -116,7 +158,7 @@ def recheck():
                 if len(responsibility) < 50:
                     suggestions.append({
                         'type': 'responsibility_length',
-                        'message': f'Responsibility {idx + 1} in job "{experience["jobTitle"]}" is too short.'
+                        'message': f'Responsibility {idx + 1} in job "{experience["job_title"]}" is too short.'
                     })
 
     # Check for missing skills
@@ -152,7 +194,7 @@ def recheck():
                         if too_long_bullets:
                             bullet_points_length_issues.append({
                                 'section': section,
-                                'item': item.get('jobTitle', item.get('projectTitle', '')),
+                                'item': item.get('job_title', item.get('projectTitle', '')),
                                 'total_bullets': total_bullets,
                                 'too_long_bullets': too_long_bullets
                             })

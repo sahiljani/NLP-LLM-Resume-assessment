@@ -13,9 +13,8 @@ import uuid
 from resume_parser.kw import suggest_verbs
 from resume_parser.repetitive_verbs import repetitive_verbs
 from resume_parser.filler import detect_filler_words
-
+import re
 resume_parser_bp = Blueprint('resume_parser', __name__)
-
 UPLOAD_FOLDER = 'uploads'
 GENERATED_FOLDER = 'generated'
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -213,7 +212,7 @@ def recheck():
     for issue in bullet_points_length_issues:
         suggestions.append({
             'type': 'bullet_point_length',
-            'message': f'In {issue["section"]} "{(issue["item"])}", {len(issue["total_bullets"])} bullet points are too long.'
+'message': f'In {issue["section"]} "{(" ".join(re.sub(r"[^\w\s]", "", " ".join(issue["total_bullets"])).split()[:5]) + ".....")}", {len(issue["total_bullets"])} bullet points are too long.'
         })
 
     return jsonify(suggestions=suggestions, repetitiveVerbs=repetitiveverbs, filler_words=filler_words)
@@ -257,7 +256,7 @@ def generate_pdf():
 
 if __name__ == '__main__':
     from flask import Flask
-    app = Flask(__name__)
+    app = Flask(__name__,  static_url_path='/static')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['GENERATED_FOLDER'] = GENERATED_FOLDER
     app.secret_key = 'supersecretkey'

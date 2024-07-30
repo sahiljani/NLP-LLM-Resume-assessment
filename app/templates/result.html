@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         #suggestions {
-            max-height: 200px;
+            max-height: 500px   ;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
@@ -71,6 +71,10 @@
         .suggestion-table th {
             background-color: #f2f2f2;
             text-align: left;
+        }
+        .rewritebtn img:hover{
+            box-shadow: 8px 8px #00bf63;
+    transition: .3s;
         }
     </style>
     <script>
@@ -176,7 +180,7 @@
                                     Responsibility ${index + 1}
                                 </label>
                                 <input type="text" id="${key}-${newIndex}-${index}" name="${sectionId}[${newIndex}][${key}][${index}]" value="${responsibility}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-                                <span onclick="rewriteContent(event)" class="text-blue-500 cursor-pointer">Rewrite</span>
+                                <span onclick="rewriteContent(event)" class="rewritebtn text-blue-500 cursor-pointer"> <img style=" width: 40px; height: 40px; " src="./static/rewrite.png"></img></span>
                             </div>
                         `;
                     });
@@ -189,8 +193,7 @@
                             ${inputType === 'textarea' ?
                                 `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
                                 `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-                                
-                                 <span onclick="rewriteContent(event)" class="text-blue-500 cursor-pointer">Rewrite</span>
+                              
                                 `
                             }
                         </div>
@@ -326,7 +329,7 @@
 
             // Display bullet point issues
             if (bulletPointIssues) {
-                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Bullet Point Length Issues</h3><ul>${bulletPointIssues}</ul>`;
+                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Bullet Point Length Issues</h3><ul  style="list-style: inside;">${bulletPointIssues}</ul>`;
             }
 
             // Display filler words
@@ -446,6 +449,7 @@
                 const link = document.createElement('a');
                 link.href = "download/" + responseData.pdf_path;
                 link.textContent = responseData.pdf_path;
+                link.style.display = 'none';
                 link.target = '_blank'; // Open link in new tab
                 document.body.appendChild(link);
                 link.click(); // Simulate a click to open the link immediately
@@ -477,19 +481,19 @@
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Work Experience</h2>
             <div id="work-experience"></div>
-            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Work Experience')">Add Work Experience</button>
+            <!-- <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Work Experience')">Add Work Experience</button> -->
         </div>
 
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Projects</h2>
             <div id="projects"></div>
-            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Projects')">Add Project</button>
+            <!-- <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Projects')">Add Project</button> -->
         </div>
 
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Education</h2>
             <div id="education"></div>
-            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Education')">Add Education</button>
+            <!-- <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Education')">Add Education</button> -->
         </div>
 
         <div class="mb-8">
@@ -506,7 +510,7 @@
             <h2 class="text-xl font-bold mb-4">Suggestions</h2>
             <ul id="suggestions" class="list-unstyled"></ul>
             <button type="button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mt-4" onclick="recheckDetails()">Recheck</button>
-            <button type="button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4" onclick="updateJson()">Done</button>
+            <button type="button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4" onclick="updateJson()">Download PDF</button>
         </div>
     </div>
 </body>

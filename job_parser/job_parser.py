@@ -3,14 +3,26 @@ import nltk
 import jsonlines
 import re
 import os
+import ssl
 
 from spacy.pipeline import EntityRuler
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk import pos_tag, ne_chunk
 
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+
+nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('maxent_ne_chunker')
 nltk.download('words')
+
+
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")

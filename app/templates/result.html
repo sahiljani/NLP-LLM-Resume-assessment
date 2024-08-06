@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         #suggestions {
-            max-height: 500px   ;
+            max-height: 500px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
@@ -72,9 +72,10 @@
             background-color: #f2f2f2;
             text-align: left;
         }
-        .rewritebtn img:hover{
+
+        .rewritebtn img:hover {
             box-shadow: 8px 8px #00bf63;
-    transition: .3s;
+            transition: .3s;
         }
     </style>
     <script>
@@ -87,35 +88,11 @@
             const data = {{ data | tojson }};
             document.getElementById('jsonData').textContent = JSON.stringify(data, null, 4);
 
-            try {
-                populateSections('Personal Info', [data['Personal Info']]);
-            } catch (error) {
-                console.error('Error populating Personal Info:', error);
-            }
-
-            try {
-                populateSections('Work Experience', data['Work Experience']);
-            } catch (error) {
-                console.error('Error populating Work Experience:', error);
-            }
-
-            try {
-                populateSections('Projects', data['Projects']);
-            } catch (error) {
-                console.error('Error populating Projects:', error);
-            }
-
-            try {
-                populateSections('Education', data['Education']);
-            } catch (error) {
-                console.error('Error populating Education:', error);
-            }
-
-            try {
-                populateSkills(data['Skills']);
-            } catch (error) {
-                console.error('Error populating Skills:', error);
-            }
+            populateSections('Personal Info', [data['Personal Info']]);
+            populateSections('Work Experience', data['Work Experience']);
+            populateSections('Projects', data['Projects']);
+            populateSections('Education', data['Education']);
+            populateSkills(data['Skills']);
         }
 
         function fetchJobData() {
@@ -129,9 +106,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    JD: job
-                })
+                body: JSON.stringify({ JD: job })
             })
                 .then(response => response.json())
                 .then(data => {
@@ -146,16 +121,15 @@
         }
 
         function populateSections(sectionId, sectionData) {
-    const section = document.getElementById(sectionId.toLowerCase().replace(" ", "-"));
-    section.innerHTML = '';
-    if (!Array.isArray(sectionData)) {
-        sectionData = [sectionData];
-    }
-    sectionData.forEach((item, index) => {
-        addSection(sectionId, item, index);
-    });
-}
-
+            const section = document.getElementById(sectionId.toLowerCase().replace(" ", "-"));
+            section.innerHTML = '';
+            if (!Array.isArray(sectionData)) {
+                sectionData = [sectionData];
+            }
+            sectionData.forEach((item, index) => {
+                addSection(sectionId, item, index);
+            });
+        }
 
         function addSection(sectionId, item = {}, index = null) {
             const section = document.getElementById(sectionId.toLowerCase().replace(" ", "-"));
@@ -180,7 +154,9 @@
                                     Responsibility ${index + 1}
                                 </label>
                                 <input type="text" id="${key}-${newIndex}-${index}" name="${sectionId}[${newIndex}][${key}][${index}]" value="${responsibility}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-                                <span onclick="rewriteContent(event)" class="rewritebtn text-blue-500 cursor-pointer"> <img style=" width: 40px; height: 40px; " src="./static/rewrite.png"></img></span>
+                                <span onclick="rewriteContent(event)" class="rewritebtn text-blue-500 cursor-pointer">
+                                    <img style="width: 40px; height: 40px;" src="./static/rewrite.png">
+                                </span>
                             </div>
                         `;
                     });
@@ -193,7 +169,6 @@
                             ${inputType === 'textarea' ?
                                 `<textarea id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">${value}</textarea>` :
                                 `<input type="${inputType}" id="${key}-${newIndex}" name="${sectionId}[${newIndex}][${key}]" value="${value}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-                              
                                 `
                             }
                         </div>
@@ -329,7 +304,7 @@
 
             // Display bullet point issues
             if (bulletPointIssues) {
-                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Bullet Point Length Issues</h3><ul  style="list-style: inside;">${bulletPointIssues}</ul>`;
+                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Bullet Point Length Issues</h3><ul style="list-style: inside;">${bulletPointIssues}</ul>`;
             }
 
             // Display filler words
@@ -345,7 +320,7 @@
         }
 
         function recheckDetails() {
-            const data = {{ data | tojson }};
+            const data = collectFormData();
             const jobSkills = Array.from(document.querySelectorAll('#job-skills input')).map(input => input.value);
 
             fetch('/api/recheck', {
@@ -353,18 +328,26 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    data: data,
-                    jobSkills: jobSkills
-                })
+                body: JSON.stringify({ data: data, jobSkills: jobSkills })
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     console.log('Recheck result:', data);
                     displaySuggestions(data.suggestions, data.repetitiveVerbs, data.filler_words);
                 })
                 .catch(error => {
                     console.error('Error rechecking details:', error);
+                    if (error.message.includes('500')) {
+                        alert('There was an internal server error. The page will be refreshed.');
+                        location.reload();
+                    } else {
+                        alert('An error occurred. Please try again later.');
+                    }
                 });
         }
 
@@ -388,7 +371,7 @@
                 });
         }
 
-        function updateJson() {
+        function collectFormData() {
             const data = {};
             const sections = ['Personal Info', 'Work Experience', 'Projects', 'Education', 'Skills'];
 
@@ -431,37 +414,41 @@
                 }
             });
 
+            return data;
+        }
+
+        function updateJson() {
+            const data = collectFormData();
             document.getElementById('jsonData').textContent = JSON.stringify(data, null, 4);
             sendPostRequest(data);
         }
 
         function sendPostRequest(data) {
-    fetch('/API/generate_pdf', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => response.json())
-        .then(responseData => {
-            if (responseData.pdf_path) {
-                const link = document.createElement('a');
-                link.href = "download/" + responseData.pdf_path;
-                link.textContent = responseData.pdf_path;
-                link.style.display = 'none';
-                link.target = '_blank'; // Open link in new tab
-                document.body.appendChild(link);
-                link.click(); // Simulate a click to open the link immediately
-            } else {
-                alert('An error occurred: ' + responseData.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-}
-
+            fetch('/API/generate_pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(responseData => {
+                    if (responseData.pdf_path) {
+                        const link = document.createElement('a');
+                        link.href = "download/" + responseData.pdf_path;
+                        link.textContent = responseData.pdf_path;
+                        link.style.display = 'none';
+                        link.target = '_blank'; // Open link in new tab
+                        document.body.appendChild(link);
+                        link.click(); // Simulate a click to open the link immediately
+                    } else {
+                        alert('An error occurred: ' + responseData.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
     </script>
 </head>
 
@@ -481,19 +468,16 @@
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Work Experience</h2>
             <div id="work-experience"></div>
-            <!-- <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Work Experience')">Add Work Experience</button> -->
         </div>
 
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Projects</h2>
             <div id="projects"></div>
-            <!-- <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Projects')">Add Project</button> -->
         </div>
 
         <div class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Education</h2>
             <div id="education"></div>
-            <!-- <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addNewSection('Education')">Add Education</button> -->
         </div>
 
         <div class="mb-8">
@@ -501,8 +485,10 @@
             <div class="scrollable-skills" id="skills"></div>
         </div>
 
-        <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML</h1>
-        <pre id="jsonData" class="overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
+        <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML
+            <button id="expandButton" class="ml-1 px-3 py-1 bg-blue-500 text-white rounded">Expand</button>
+        </h1>
+        <pre id="jsonData" class="hidden overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
     </div>
 
     <div class="lg:5/12 lg:pl-6">
@@ -513,6 +499,20 @@
             <button type="button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4" onclick="updateJson()">Download PDF</button>
         </div>
     </div>
+
+    <script>
+        document.getElementById('expandButton').addEventListener('click', function () {
+            const preElement = document.getElementById('jsonData');
+            const button = document.getElementById('expandButton');
+            if (preElement.classList.contains('hidden')) {
+                preElement.classList.remove('hidden');
+                button.textContent = 'Collapse';
+            } else {
+                preElement.classList.add('hidden');
+                button.textContent = 'Expand';
+            }
+        });
+    </script>
 </body>
 
 </html>

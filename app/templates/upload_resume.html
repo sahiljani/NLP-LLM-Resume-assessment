@@ -105,7 +105,7 @@
             </div>
             <button type="submit" class="btn btn-primary btn-block">Upload</button>
             <button type="reset" class="btn btn-secondary btn-block">Reset</button>
-            <button type="button" class="btn btn-success btn-block" onclick="recheckDetails()">Recheck</button>
+          
         </form>
 
         {% with messages = get_flashed_messages() %}
@@ -137,11 +137,7 @@
                     }, false);
                 });
 
-                // Custom file input label update
-                $('.custom-file-input').on('change', function() {
-                    var fileName = $(this).val().split('\\').pop();
-                    $(this).next('.custom-file-label').addClass("selected").html(fileName);
-                });
+           
             }, false);
         })();
     </script>

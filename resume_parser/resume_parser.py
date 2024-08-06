@@ -37,6 +37,8 @@ def parse_resume(resume_text):
     education = extract_education(sections.get('Education', ''))
     work_experience = extract_work_experience(sections.get('Work Experience', ''))
     projects = extract_projects(sections.get('Projects', ''))
+    print("projects")
+    print(projects)
     skills = extract_skills(sections.get('Skills', ''))
 
     # print(projects)

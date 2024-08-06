@@ -121,9 +121,10 @@ def generate_latex_from_json(data):
           \resumeSubHeadingListStart
         '''
         for job in work_experience:
+            job_title = job.get("job_title", job.get("jobTitle", ""))
             latex_code += r'''
             \resumeSubheading
-              {''' + escape_latex_special_chars(job.get("job_title", "")) + r'''}{''' + escape_latex_special_chars(job.get("dateRange", "")) + r'''}
+              {''' + escape_latex_special_chars(job_title) + r'''}{''' + escape_latex_special_chars(job.get("dateRange", "")) + r'''}
               {''' + escape_latex_special_chars(job.get("company", "")) + r'''}{''' + escape_latex_special_chars(job.get("location", "")) + r'''}
               \resumeItemListStart
             '''

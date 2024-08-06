@@ -13,7 +13,10 @@ import uuid
 from resume_parser.kw import suggest_verbs
 from resume_parser.repetitive_verbs import repetitive_verbs
 from resume_parser.filler import detect_filler_words
+from resume_parser.filler import check_consistency
+from resume_parser.filler import check_tone
 import re
+
 resume_parser_bp = Blueprint('resume_parser', __name__)
 UPLOAD_FOLDER = 'uploads'
 GENERATED_FOLDER = 'generated'
@@ -210,10 +213,30 @@ def recheck():
                                     })
     
     for issue in bullet_points_length_issues:
+        section = issue["section"]
+        total_bullets_preview = " ".join(re.sub(r"[^\w\s]", "", " ".join(issue["total_bullets"])).split()[:5]) + "....."
+        total_bullets_count = len(issue["total_bullets"])
+
+        message = 'In {section} "{preview}", {count} bullet points are too long.'.format(
+            section=section,
+            preview=total_bullets_preview,
+            count=total_bullets_count
+        )
+
         suggestions.append({
             'type': 'bullet_point_length',
-'message': f'In {issue["section"]} "{(" ".join(re.sub(r"[^\w\s]", "", " ".join(issue["total_bullets"])).split()[:5]) + ".....")}", {len(issue["total_bullets"])} bullet points are too long.'
+            'message': message
         })
+
+    # Consistency check
+    consistency_issues = check_consistency(json.dumps(data))
+    suggestions.extend(consistency_issues)
+    print(consistency_issues)
+
+    # Professional tone and language
+    tone_issues = check_tone(json.dumps(data))
+    suggestions.extend(tone_issues)
+    print(tone_issues)
 
     return jsonify(suggestions=suggestions, repetitiveVerbs=repetitiveverbs, filler_words=filler_words)
 

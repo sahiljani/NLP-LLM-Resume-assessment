@@ -81,10 +81,11 @@ def generate_latex_from_json(data):
         \end{tabular*}\vspace{-7pt}
     }
 
-    \newcommand{\resumeProjectHeading}[2]{
+    \newcommand{\resumeProjectHeading}[4]{
         \item
         \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
-          \small#1 & #2 \\
+          \textbf{#1} & #2 \\
+          \textit{\small#3} & \textit{\small #4} \\
         \end{tabular*}\vspace{-7pt}
     }
 
@@ -121,7 +122,7 @@ def generate_latex_from_json(data):
           \resumeSubHeadingListStart
         '''
         for job in work_experience:
-            job_title = job.get("job_title", job.get("jobTitle", ""))
+            job_title = job.get("jobTitle", "")
             latex_code += r'''
             \resumeSubheading
               {''' + escape_latex_special_chars(job_title) + r'''}{''' + escape_latex_special_chars(job.get("dateRange", "")) + r'''}
@@ -147,18 +148,21 @@ def generate_latex_from_json(data):
           \resumeSubHeadingListStart
         '''
         for project in projects:
-            descriptions = project.get("Description", "").split("•")
-            project_title = escape_latex_special_chars(descriptions[0].strip())
-            project_details = descriptions[1:]
+            project_title = escape_latex_special_chars(project.get("Project_title", ""))
+            project_dates = escape_latex_special_chars(project.get("Project_dates", ""))
+            project_links = escape_latex_special_chars(project.get("Project_links", ""))
+            project_description = project.get("Project_description", "").split("\n")
+            
             latex_code += r'''
-            \resumeProjectHeading
-              {''' + project_title + r'''}{}
+            \resumeSubheading
+              {''' + project_title + r'''}{''' + project_dates + r'''}
+              {''' + project_links + r'''}{}
               \resumeItemListStart
             '''
-            for detail in project_details:
+            for detail in project_description:
                 if detail.strip():
                     latex_code += r'''
-                    \resumeItem{''' + escape_latex_special_chars(detail.strip()).replace("(", r"\href{").replace(")", r"}{\underline{Github}}") + r'''}
+                    \resumeItem{''' + escape_latex_special_chars(detail.strip()) + r'''}
                     '''
             latex_code += r'''
               \resumeItemListEnd
@@ -231,3 +235,89 @@ def latex_to_pdf(latex_code, output_pdf, output_folder='output'):
             temp_file = os.path.join(output_folder, f'temp.{ext}')
             if os.path.exists(temp_file):
                 os.remove(temp_file)
+
+# Example JSON data
+data = {
+    "Personal Info": [
+        {
+            "Email": "iam@janisahil.com",
+            "GitHub": "github.com/sahiljani",
+            "LinkedIn": "linkedin.com/in/jani-sahil",
+            "Location": "Ontario",
+            "Name": "Sahil Jani",
+            "Phone": "249-877-2908"
+        }
+    ],
+    "Work Experience": [
+        {
+            "company": "Leasey.AI",
+            "dateRange": "Jul 2023 – Dec 2023",
+            "jobTitle": "Web Developer (Contract)",
+            "location": "Vancouver, Canada",
+            "responsibilities": [
+                "Led migration from SaaS to open-source CMS, cutting costs by 75% and adding advanced functionalities.",
+                "Engineered custom PHP solutions for dynamic functionality, enhancing interactivity with JavaScript and CSS, and achieved a 25% reduction in bounce rate.",
+                "Implemented PhpRedis for caching in the PHP environment, boosting application speed by 40%."
+            ]
+        },
+        {
+            "company": "ManticLabs Web Solutions Pvt. Ltd.",
+            "dateRange": "Jun 2021 – May 2023",
+            "jobTitle": "Software Developer",
+            "location": "Gujarat, India",
+            "responsibilities": [
+                "Enhanced system performance by 40% and supported over 100,000 users through designing, developing, and maintaining software applications.",
+                "Showcased proficiency in Java, PHP, and JavaScript, implementing over 15 scalable solutions, and mastered SQL and NoSQL database management.",
+                "Wrote unit tests using PHPUnit to ensure code reliability and reduce bugs.",
+                "Implemented agile methodologies which reduced project turnaround times by 25%, fostering a more responsive development environment and enhancing overall team productivity."
+            ]
+        },
+        {
+            "company": "Cyberstrek Technologies",
+            "dateRange": "Nov 2020 – May 2021",
+            "jobTitle": "Web Developer - Internship",
+            "location": "Gujarat, India",
+            "responsibilities": [
+                "Developed CRM features using PHP and MySQL, meeting industry standards for clean, efficient solutions.",
+                "Seamlessly integrated backend functionalities, improving data processing efficiency by 20%.",
+                "Designed responsive interfaces using HTML, CSS, and JavaScript to enhance user experience."
+            ]
+        }
+    ],
+    "Projects": [
+        {
+            "Project_dates": "Mar 2024 – Apr 2024",
+            "Project_links": "Github",
+            "Project_title": "Investor Management System",
+            "project_skills": "",
+            "Project_description": "Developed and integrated over 15 advanced filters using MySQL and Eloquent ORM to match projects with ideal investors based on specific requirements, enhancing project-investor matching efficiency.\nIntegrated an Amazon SES email sending feature to send up to 2,000 bulk emails at once, utilizing Laravel Queue for efficient processing, with open rate tracking and reporting."
+        },
+        {
+            "Project_dates": "Oct 2023 - Dec 2023",
+            "Project_links": "Github",
+            "Project_title": "Incentive-based Quiz Website",
+            "project_skills": "",
+            "Project_description": "Developed a React and Laravel-based quiz website with Adsense monetization and Google Analytics integration, increasing monthly ad revenue by 50%."
+        },
+        {
+            "Project_dates": "May 2023 - Jul 2023",
+            "Project_links": "wssurgical.com",
+            "Project_title": "Website Design & Content Management System",
+            "project_skills": "",
+            "Project_description": "Transformed Figma designs into a responsive web app with Tailwind CSS and Alpine.js, boosting user engagement by 30%, and built a CMS with Laravel, increasing lead generation by 20% through a new submission system."
+        }
+    ],
+    "Education": [
+        {
+            "Institution": "Some University",
+            "Start Year": "2018",
+            "End Year": "2022",
+            "Degree": "Bachelor of Science in Computer Science"
+        }
+    ],
+    "Skills": "HTML\nCSS\nJavaScript\nTypescript\nNext.js\nPHP\nJava\nPython\nNode.js\nLaravel\nDatabase\nSQL\nMySQL\nNoSQL\nMongoDB\nAzure\nDocker\nGit\nJenkins\nTerraform\nAnsible"
+}
+
+latex_code = generate_latex_from_json(data)
+pdf_path = latex_to_pdf(latex_code, 'resume.pdf')
+print(f"PDF generated at: {pdf_path}")

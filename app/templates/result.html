@@ -266,6 +266,8 @@
             let bulletPointIssues = '';
             let responsibilityIssues = '';
             let fillerWordsList = '';
+            let toneIssues = '';
+            let consistencyIssues = '';
 
             suggestions.forEach(suggestion => {
                 if (suggestion.type === 'missing_skill') {
@@ -276,6 +278,11 @@
                     bulletPointIssues += `<li>${suggestion.message}</li>`;
                 } else if (suggestion.type === 'responsibility_length') {
                     responsibilityIssues += `<li>${suggestion.message}</li>`;
+                }else if(suggestion.type === 'tone'){
+                    toneIssues += `<li>${suggestion.message}</li>`;
+                }
+                else if(suggestion.type === 'consistency'){
+                    consistencyIssues += `<li>${suggestion.message}</li>`;
                 }
             });
 
@@ -305,6 +312,16 @@
             // Display bullet point issues
             if (bulletPointIssues) {
                 suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Bullet Point Length Issues</h3><ul style="list-style: inside;">${bulletPointIssues}</ul>`;
+            }
+
+            // Display tone point issues
+            if (toneIssues) {
+                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Tone Issues</h3><ul style="list-style: inside;">${toneIssues}</ul>`;
+            }
+
+            // Display consistency point issues
+            if (consistencyIssues) {
+                suggestionsList.innerHTML += `<h3 class="text-lg font-semibold mb-2">Consistency Issues</h3><ul style="list-style: inside;">${consistencyIssues}</ul>`;
             }
 
             // Display filler words
@@ -488,8 +505,7 @@
         <h1 class="text-3xl font-bold mb-4">Display JSON Data in HTML
             <button id="expandButton" class="ml-1 px-3 py-1 bg-blue-500 text-white rounded">Expand</button>
         </h1>
-        <pre id="jsonData" class="hidden overflow-auto mb-6 bg-
-        white p-4 border rounded-lg"></pre>
+        <pre id="jsonData" class="hidden overflow-auto mb-6 bg-white p-4 border rounded-lg"></pre>
     </div>
 
     <div class="lg:5/12 lg:pl-6">

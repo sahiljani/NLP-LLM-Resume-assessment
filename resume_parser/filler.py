@@ -1,4 +1,6 @@
 import spacy
+import json
+
 
 # Load the spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -33,76 +35,72 @@ def detect_filler_words(text):
     
     return detected_fillers
 
-# # Example text
-# text = """
-# {
-#     "Education": [
-#         {
-#             "Degree": "Post-Graduation in Artificial Intelligence",
-#             "End Year": "2024",
-#             "Institution": "Georgian College",
-#             "Location": "Ontario, Canada",
-#             "Start Year": "2024"
-#         },
-#         {
-#             "Degree": "Post-Graduation in Mobile Application Development",
-#             "End Year": "2023",
-#             "Institution": "Georgian College",
-#             "Location": "Ontario, Canada",
-#             "Start Year": "2023"
-#         },
-#         {
-#             "Degree": "Bachelor of Engineering - Computer Engineering",
-#             "End Year": "2021",
-#             "Institution": "Gujarat Technological University",
-#             "Location": "Gujarat, India",
-#             "Start Year": "2017"
-#         }
-#     ],
-#     "Personal Info": {
-#         "Email": "iam@janisahil.com",
-#         "GitHub": null,
-#         "LinkedIn": null,
-#         "Location": "Ontario",
-#         "Name": "Sahil Jani",
-#         "Phone": "249-877-2908"
-#     },
-#     "Projects": [
-#         {
-#             "Description": "Resume Tailor |Python, React Mar 2024 - Apr 2024 •Implemented advanced filtering and matching algorithms in a Resume Analyzer & Job Matching Platform using NLP and LLM, with React interface and LaTeX integration for streamlined resume creation and PDF conversion. Investor Management System (Github )|PHP, MySQL Dec 2023 - Feb 2024 •Integrated over 15 advanced filters using MySQL and Eloquent ORM to match projects with ideal investors based on specific requirements, significantly enhancing the efficiency of project-investor matching. •Built Amazon SES email-sending feature to send up to 5,000 bulk emails at once. Utilized queue system for efficient processing, including open rate tracking and reporting for detailed insights. Custom Relational Database |Java Apr 2021 - May 2021 •Implemented a fully functional relational database from scratch in Java CLI (Maven) application with data parsers to store and retrieve metadata and raw data."
-#         }
-#     ],
-#     "Skills": "HTML\nCSS\nJavaScript\nTypescript\nNext.js\nPHP\nJava\nPython\nNode.js\nSpring Boot\nLaravel\nDatabase\nSQL\nMySQL\nPostgreSQL\nNoSQL\nMongoDB\nAzure\nDocker\nKubernetes\nPostman\nAPI",
-#     "Work Experience": [
-#         {
-#             "company": "Leasey",
-#             "date_range": "Jul 2023 – Dec 2023",
-#             "job_title": "Web Developer",
-#             "location": "British Columbia, Canada",
-#             "responsibilities": [
-#                 "Directed as needed transition from SaaS-based CMS to open-source CMS, reducing Subscription costs by 75% and enabling advanced functionalities.",
-#                 "Executed custom PHP implementations for dynamic functionality, incorporating JavaScript and CSS for interactive features, achieving pixel-perfect website design and reducing bounce rate by 25%."
-#             ]
-#         },
-#         {
-#             "company": "ManticLabs Web Solutions Pvt. Ltd.",
-#             "date_range": "Jun 2021 – Mar 2023",
-#             "job_title": "Software Developer",
-#             "location": "Gujarat, India",
-#             "responsibilities": [
-#                 "Directed end-to-end software development and coordinated with cross-functional teams, developing 15+ high performance, maintainable applications using Node.js, JavaScript, HTML, and CSS.",
-#                 "Built dynamic, responsive user interfaces with React, enhancing user experience across multiple devices.",
-#                 "Administered SQL and NoSQL databases, optimizing queries and indexing for optimal performance.",
-#                 "Ensured high-quality standards and reliability through comprehensive quality assurance practices.",
-#                 "Implemented Scrum methodologies, enhancing team responsiveness and productivity.",
-#                 "Managed application deployment with Git and CI/CD pipelines, ensuring smooth transitions from development to production.",
-#                 "Implemented scalable, secure cloud infrastructure with AWS services, improving application performance."
-#             ]
-#         }
-#     ]
-# }
-# """
 
-# # Detect filler words in the text
-# detected_fillers = detect_filler_words(text)
-# print("Detected filler words/phrases:", detected_fillers)
+
+# Function to check consistency
+def check_consistency(json_data):
+    data = json.loads(json_data)
+    issues = []
+
+    # Check for consistent capitalization in job titles and institutions
+    if 'Work Experience' in data:
+        job_titles = [exp.get('job_title', '') for exp in data['Work Experience']]
+        for title in job_titles:
+            if title and title.lower() != title and title.upper() != title and title.title() != title:
+                issues.append({
+                    'type': 'consistency',
+                    'message': f'Inconsistent capitalization in job title: "{title}"'
+                })
+
+    if 'Education' in data:
+        institutions = [edu.get('Institution', '') for edu in data['Education']]
+        for institution in institutions:
+            if institution and institution.lower() != institution and institution.upper() != institution and institution.title() != institution:
+                issues.append({
+                    'type': 'consistency',
+                    'message': f'Inconsistent capitalization in institution name: "{institution}"'
+                })
+
+    # Check for consistent use of terms
+    term_usage = {}
+    for exp in data.get('Work Experience', []):
+        for responsibility in exp.get('responsibilities', []):
+            words = responsibility.split()
+            for word in words:
+                word_lower = word.lower()
+                if word_lower not in term_usage:
+                    term_usage[word_lower] = set()
+                term_usage[word_lower].add(word)
+
+    for term, variations in term_usage.items():
+        if len(variations) > 1:
+            issues.append({
+                'type': 'consistency',
+                'message': f'Inconsistent use of the term "{term}": {", ".join(variations)}'
+            })
+
+    return issues
+
+# Function to check tone
+def check_tone(json_data):
+    data = json.loads(json_data)
+    issues = []
+    informal_words = {'stuff', 'things', 'cool', 'awesome', 'nice', 'great'}
+
+    def check_text(text):
+        words = text.split()
+        for word in words:
+            if word.lower() in informal_words:
+                issues.append({
+                    'type': 'tone',
+                    'message': f'Informal word "{word}" found. Consider using more professional language.'
+                })
+
+    for exp in data.get('Work Experience', []):
+        for responsibility in exp.get('responsibilities', []):
+            check_text(responsibility)
+
+    for project in data.get('Projects', []):
+        check_text(project.get('Description', ''))
+
+    return issues
